@@ -2,6 +2,9 @@ from .models import CustomUser, Portfolio, PortfolioHistory
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.hashers import make_password
+import logging
+
+logger = logging.getLogger(__name__)
 
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
@@ -45,7 +48,14 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['email'] = user.email
         token['first_name'] = user.first_name
         token['last_name'] = user.last_name
+        logger.debug(f"Generated token for user {user.username}")
         return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        logger.debug(f"Login attempt for user: {attrs.get('username')}")
+        logger.debug(f"Generated tokens: access (first 20 chars): {data.get('access', '')[:20]}")
+        return data
 
 class PasswordResetSerializer(serializers.Serializer):
     email = serializers.EmailField(

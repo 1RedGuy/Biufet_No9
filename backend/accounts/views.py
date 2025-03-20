@@ -14,6 +14,7 @@ from .serializer import (
     PortfolioSerializer,
     PortfolioHistorySerializer
 )
+from decimal import Decimal
 
 class SignUpView(APIView):
     permission_classes = [AllowAny]
@@ -49,6 +50,42 @@ class PasswordResetView(APIView):
             )
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserViewSet(viewsets.ModelViewSet):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return CustomUser.objects.filter(id=self.request.user.id)
+    
+    @action(detail=False, methods=['post'])
+    def add_credits(self, request):
+        try:
+            amount = Decimal(str(request.data.get('amount', 0)))
+            if amount <= 0:
+                return Response(
+                    {'error': 'Amount must be greater than 0'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            user = request.user
+            user.add_credits(amount)
+            
+            return Response({
+                'message': f'Successfully added {amount} credits',
+                'current_credits': user.credits
+            })
+        except (TypeError, ValueError):
+            return Response(
+                {'error': 'Invalid amount'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    @action(detail=False, methods=['get'])
+    def credits(self, request):
+        return Response({
+            'credits': request.user.credits
+        })
 
 class PortfolioViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PortfolioSerializer

@@ -1,48 +1,114 @@
 from rest_framework import serializers
-from .models import Investment
+from .models import Investment, InvestmentPosition
 from indexes.models import Index
+from indexes.serializers import IndexSerializer
+from companies.models import Company
+from companies.serializers import CompanySerializer
+from decimal import Decimal
+from django.utils import timezone
+
+class InvestmentPositionSerializer(serializers.ModelSerializer):
+    company = CompanySerializer(read_only=True)
+    company_id = serializers.PrimaryKeyRelatedField(
+        write_only=True,
+        source='company',
+        queryset=Company.objects.all()
+    )
+    profit_loss = serializers.DecimalField(
+        max_digits=20,
+        decimal_places=2,
+        read_only=True
+    )
+    profit_loss_percentage = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        read_only=True
+    )
+
+    class Meta:
+        model = InvestmentPosition
+        fields = [
+            'id',
+            'company',
+            'company_id',
+            'amount',
+            'quantity',
+            'purchase_price',
+            'current_price',
+            'weight',
+            'profit_loss',
+            'profit_loss_percentage',
+            'last_updated'
+        ]
+        read_only_fields = ['id', 'last_updated']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['profit_loss'] = instance.calculate_profit_loss()
+        data['profit_loss_percentage'] = instance.calculate_profit_loss_percentage()
+        return data
 
 class InvestmentSerializer(serializers.ModelSerializer):
-    index_name = serializers.CharField(source='index.name', read_only=True)
-    user_credits = serializers.DecimalField(source='user.credits', read_only=True, max_digits=20, decimal_places=2)
+    index = IndexSerializer(read_only=True)
+    index_id = serializers.PrimaryKeyRelatedField(
+        write_only=True,
+        source='index',
+        queryset=Index.objects.all()
+    )
+    positions = InvestmentPositionSerializer(many=True, read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
 
     class Meta:
         model = Investment
         fields = [
-            'id', 'index', 'index_name', 'amount', 'current_value', 'profit_loss',
-            'investment_date', 'status', 'transaction_id',
-            'withdrawal_eligible', 'lock_period_end', 'user_credits'
+            'id',
+            'username',
+            'index',
+            'index_id',
+            'amount',
+            'current_value',
+            'profit_loss',
+            'profit_loss_percentage',
+            'investment_date',
+            'status',
+            'transaction_id',
+            'withdrawal_eligible',
+            'lock_period_end',
+            'last_updated',
+            'positions'
         ]
         read_only_fields = [
-            'current_value', 'profit_loss', 'transaction_id',
-            'withdrawal_eligible', 'status', 'user_credits'
+            'id',
+            'username',
+            'current_value',
+            'profit_loss',
+            'profit_loss_percentage',
+            'investment_date',
+            'withdrawal_eligible',
+            'last_updated',
+            'transaction_id',
+            'lock_period_end'
         ]
 
-    def validate(self, data):
+    def validate_amount(self, value):
+        """Validate investment amount"""
+        min_investment = Decimal('100.00')  # Minimum investment amount
+        if value < min_investment:
+            raise serializers.ValidationError(
+                f'Minimum investment amount is {min_investment}'
+            )
+        return value
+
+    def validate_lock_period_end(self, value):
+        """Validate lock period end date"""
+        if value <= timezone.now():
+            raise serializers.ValidationError(
+                'Lock period end date must be in the future'
+            )
+        return value
+
+    def create(self, validated_data):
         user = self.context['request'].user
-        amount = data.get('amount')
-        index = data.get('index')
-
-        # Check if user has enough credits
-        if user.credits < amount:
-            raise serializers.ValidationError(
-                f"Insufficient credits. You have {user.credits} credits, but the investment requires {amount} credits."
-            )
-
-        # Check if index exists and is active
-        if not index.is_active:
-            raise serializers.ValidationError(
-                f"Index {index.name} is not currently active for investments."
-            )
-
-        # Check if amount is within index limits
-        if amount < index.min_investment:
-            raise serializers.ValidationError(
-                f"Minimum investment for this index is {index.min_investment} credits."
-            )
-        if amount > index.max_investment:
-            raise serializers.ValidationError(
-                f"Maximum investment for this index is {index.max_investment} credits."
-            )
-
-        return data 
+        validated_data['user'] = user
+        validated_data['current_value'] = validated_data['amount']
+        return super().create(validated_data) 
