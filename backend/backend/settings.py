@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'indexes',
     'rest_framework',
     'corsheaders',
+    'investments',
     'rest_framework_simplejwt',
 ]
 
