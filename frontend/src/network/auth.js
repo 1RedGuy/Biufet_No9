@@ -26,11 +26,14 @@ const api = axios.create({
 });
 
 const authService = {
-  async register(email, password) {
+  async register(email, password, username, firstName, lastName) {
     try {
-      const response = await api.post('/auth/register', {
+      const response = await api.post('/accounts/signup/', {
         email,
         password,
+        username: username || email.split('@')[0],
+        first_name: firstName || 'User',
+        last_name: lastName || 'Name'
       });
       
       if (response.data.token) {
@@ -55,7 +58,7 @@ const authService = {
 
   async login(email, password) {
     try {
-      const response = await api.post('/auth/login', {
+      const response = await api.post('/accounts/login/', {
         email,
         password,
       });
