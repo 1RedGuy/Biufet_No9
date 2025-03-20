@@ -1,70 +1,98 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+// API URL from environment variables
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// Cookie configuration
+// Cookie configuration from environment variables
 const COOKIE_OPTIONS = {
-  expires: 7, // 7 days
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
+  expires: parseInt(process.env.NEXT_PUBLIC_COOKIE_EXPIRES) || 7,
+  secure: process.env.NEXT_PUBLIC_COOKIE_SECURE === 'true',
+  sameSite: process.env.NEXT_PUBLIC_COOKIE_SAME_SITE || 'strict',
   path: '/'
 };
+
+// Auth keys from environment variables
+const AUTH_TOKEN_KEY = process.env.NEXT_PUBLIC_AUTH_TOKEN_KEY || 'token';
+const AUTH_USER_KEY = process.env.NEXT_PUBLIC_AUTH_USER_KEY || 'user';
+
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true // Important for cookies
+});
 
 const authService = {
   async register(email, password) {
     try {
-      const response = await axios.post(`${API_URL}/auth/register`, {
+      const response = await api.post('/auth/register', {
         email,
         password,
       });
       
       if (response.data.token) {
         // Store token in cookie
-        Cookies.set('token', response.data.token, COOKIE_OPTIONS);
+        Cookies.set(AUTH_TOKEN_KEY, response.data.token, COOKIE_OPTIONS);
         // Store user data in cookie
-        Cookies.set('user', JSON.stringify(response.data.user), COOKIE_OPTIONS);
+        Cookies.set(AUTH_USER_KEY, JSON.stringify(response.data.user), COOKIE_OPTIONS);
       }
       
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Registration failed' };
+      // Handle specific error cases
+      if (error.response?.status === 409) {
+        throw { message: 'Email already exists' };
+      }
+      if (error.response?.status === 400) {
+        throw { message: error.response.data.message || 'Invalid registration data' };
+      }
+      throw { message: 'Registration failed. Please try again.' };
     }
   },
 
   async login(email, password) {
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
+      const response = await api.post('/auth/login', {
         email,
         password,
       });
       
       if (response.data.token) {
         // Store token in cookie
-        Cookies.set('token', response.data.token, COOKIE_OPTIONS);
+        Cookies.set(AUTH_TOKEN_KEY, response.data.token, COOKIE_OPTIONS);
         // Store user data in cookie
-        Cookies.set('user', JSON.stringify(response.data.user), COOKIE_OPTIONS);
+        Cookies.set(AUTH_USER_KEY, JSON.stringify(response.data.user), COOKIE_OPTIONS);
       }
       
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Login failed' };
+      // Handle specific error cases
+      if (error.response?.status === 401) {
+        throw { message: 'Invalid email or password' };
+      }
+      if (error.response?.status === 400) {
+        throw { message: error.response.data.message || 'Invalid login data' };
+      }
+      throw { message: 'Login failed. Please try again.' };
     }
   },
 
   logout() {
     // Remove cookies
-    Cookies.remove('token', COOKIE_OPTIONS);
-    Cookies.remove('user', COOKIE_OPTIONS);
+    Cookies.remove(AUTH_TOKEN_KEY, COOKIE_OPTIONS);
+    Cookies.remove(AUTH_USER_KEY, COOKIE_OPTIONS);
   },
 
   getCurrentUser() {
-    const user = Cookies.get('user');
+    const user = Cookies.get(AUTH_USER_KEY);
     return user ? JSON.parse(user) : null;
   },
 
   getToken() {
-    return Cookies.get('token');
+    return Cookies.get(AUTH_TOKEN_KEY);
   },
 
   isAuthenticated() {
@@ -73,7 +101,7 @@ const authService = {
 
   // Add axios interceptor to include token in all requests
   setupAxiosInterceptors() {
-    axios.interceptors.request.use(
+    api.interceptors.request.use(
       (config) => {
         const token = this.getToken();
         if (token) {
@@ -86,11 +114,15 @@ const authService = {
       }
     );
 
-    // Handle token expiration
-    axios.interceptors.response.use(
+    // Handle token expiration and other errors
+    api.interceptors.response.use(
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
+          this.logout();
+          window.location.href = '/login';
+        }
+        if (error.response?.status === 403) {
           this.logout();
           window.location.href = '/login';
         }
