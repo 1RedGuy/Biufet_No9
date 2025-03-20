@@ -11,9 +11,11 @@
   "dependencies": {
     "@types/js-cookie": "^3.0.6",
     "axios": "^1.8.4",
+    "chart.js": "^4.4.8",
     "js-cookie": "^3.0.5",
     "next": "15.2.3",
     "react": "^19.0.0",
+    "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
