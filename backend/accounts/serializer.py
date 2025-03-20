@@ -1,4 +1,4 @@
-from .models import CustomUser
+from .models import CustomUser, Portfolio, PortfolioHistory
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.hashers import make_password
@@ -29,16 +29,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'email', 'password', 'first_name', 'last_name']
-        extra_kwargs = {
-            'password': {'write_only': True},
-            'first_name': {'required': True},
-            'last_name': {'required': True}
-        }
+        fields = ('username', 'email', 'password', 'first_name', 'last_name', 'credits')
+        extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
         validated_data['password'] = make_password(validated_data.get('password'))
-        return CustomUser.objects.create(**validated_data)
+        return super().create(validated_data)
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -83,5 +79,19 @@ class PasswordResetSerializer(serializers.Serializer):
             return attrs
         except CustomUser.DoesNotExist:
             raise serializers.ValidationError({"email": "No user found with this email address"})
+
+class PortfolioSerializer(serializers.ModelSerializer):
+    user_credits = serializers.DecimalField(source='user.credits', read_only=True, max_digits=20, decimal_places=2)
+    
+    class Meta:
+        model = Portfolio
+        fields = ['total_value', 'total_profit_loss', 'last_updated', 'user_credits']
+        read_only_fields = fields
+
+class PortfolioHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PortfolioHistory
+        fields = ['value', 'profit_loss', 'timestamp']
+        read_only_fields = fields
 
     

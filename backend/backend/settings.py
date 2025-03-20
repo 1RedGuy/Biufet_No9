@@ -42,9 +42,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'accounts',
+    'companies',
+    'indexes',
     'rest_framework',
     'corsheaders',
-    'accounts',
+    'investments',
     'rest_framework_simplejwt',
 ]
 
