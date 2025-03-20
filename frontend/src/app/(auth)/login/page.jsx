@@ -21,7 +21,7 @@ export default function Login() {
 
     try {
       await authService.login(formData.email, formData.password);
-      router.push('/dashboard'); // Redirect to dashboard after successful login
+      router.push('/dashboard');
     } catch (err) {
       setError(err.message || 'Login failed');
     } finally {

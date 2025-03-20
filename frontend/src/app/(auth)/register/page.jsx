@@ -28,7 +28,7 @@ export default function Register() {
 
     try {
       await authService.register(formData.email, formData.password);
-      router.push('/dashboard'); // Redirect to dashboard after successful registration
+      router.push('/dashboard');
     } catch (err) {
       setError(err.message || 'Registration failed');
     } finally {
