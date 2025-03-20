@@ -10,7 +10,7 @@ from .serializer import (
 )
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .models import CustomUser, Portfolio
-from .serializers import (
+from .serializer import (
     PortfolioSerializer,
     PortfolioHistorySerializer
 )

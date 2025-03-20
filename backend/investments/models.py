@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from decimal import Decimal
 from indexes.models import Index
+from companies.models import Company
 
 class Investment(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='investments')
