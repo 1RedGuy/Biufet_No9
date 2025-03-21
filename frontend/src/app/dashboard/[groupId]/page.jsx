@@ -78,14 +78,6 @@ export default function GroupPage() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="text-right">
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Total Companies
-                  </p>
-                  <p className="text-xl font-bold text-primary-600 dark:text-primary-400">
-                    {indexData?.companyCount}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     Total Investment
                   </p>
                   <p className="text-xl font-bold text-primary-600 dark:text-primary-400">
@@ -96,7 +88,6 @@ export default function GroupPage() {
             </div>
           </div>
 
-          {/* Don't show companies in loading state */}
         </div>
       </section>
     );
@@ -195,14 +186,6 @@ export default function GroupPage() {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4">
-              <div className="text-right">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Total Companies
-                </p>
-                <p className="text-xl font-bold text-primary-600 dark:text-primary-400">
-                  {indexData.company_count || 0}
-                </p>
-              </div>
               <div className="text-right">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Total Investment

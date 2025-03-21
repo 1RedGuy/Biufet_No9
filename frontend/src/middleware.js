@@ -20,7 +20,8 @@ export function middleware(request) {
     (path) => pathname === path || pathname.startsWith(`${path}/`)
   );
 
-  const token = request.cookies.get("token")?.value;
+  // Check for either access token or legacy token
+  const token = request.cookies.get("token")?.value || request.cookies.get("access")?.value;
 
   // For fully protected paths, redirect to login if not authenticated
   if (isFullyProtectedPath && !token) {

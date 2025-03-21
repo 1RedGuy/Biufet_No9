@@ -4,6 +4,9 @@ import Cookies from "js-cookie";
 // API URL and token key using hardcoded values
 const API_URL = "http://localhost:8000/";
 const AUTH_TOKEN_KEY = "token";
+const AUTH_REFRESH_KEY = "refresh";
+const AUTH_USER_KEY = "user";
+const COOKIE_OPTIONS = { expires: 7, path: '/' };
 
 // Helper function to log requests and responses for debugging
 const logRequest = (method, url, data = null, headers = null) => {
@@ -95,30 +98,42 @@ const authService = {
 
   async login(username, password) {
     try {
-      const response = await api.post("/accounts/login/", {
+      const api = createApiInstance();
+      const response = await api.post("accounts/login/", {
         username,
         password,
       });
 
-      if (response.data.token) {
-        // Store token in cookie
-        Cookies.set(AUTH_TOKEN_KEY, response.data.token, COOKIE_OPTIONS);
-        // Store user data in cookie
-        Cookies.set(
-          AUTH_USER_KEY,
-          JSON.stringify(response.data.user),
-          COOKIE_OPTIONS
-        );
+      if (!response.data || !response.data.access) {
+        throw new Error("Invalid response from server");
       }
+
+      // Store access token
+      Cookies.set(AUTH_TOKEN_KEY, response.data.access, COOKIE_OPTIONS);
+      
+      // Store refresh token if available
+      if (response.data.refresh) {
+        Cookies.set(AUTH_REFRESH_KEY, response.data.refresh, COOKIE_OPTIONS);
+      }
+
+      // Store user data if available
+      if (response.data.user) {
+        Cookies.set(AUTH_USER_KEY, JSON.stringify(response.data.user), COOKIE_OPTIONS);
+      }
+
+      return {
+        ...response.data,
+        token: response.data.access // Add token property for compatibility
+      };
     } catch (error) {
       // Handle specific error cases
       if (error.response?.status === 401) {
-        throw { message: "Invalid username or password" };
+        throw new Error("Invalid username or password");
       }
       if (error.response?.status === 400) {
-        throw { message: error.response.data.message || "Invalid login data" };
+        throw new Error(error.response.data.message || "Invalid login data");
       }
-      throw { message: "Login failed. Please try again." };
+      throw new Error("Login failed. Please try again.");
     }
   },
 

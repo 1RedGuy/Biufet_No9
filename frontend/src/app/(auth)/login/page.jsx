@@ -20,10 +20,20 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await authService.login(formData.username, formData.password);
-      router.push("/dashboard");
+      console.log("Attempting login...");
+      const response = await authService.login(formData.username, formData.password);
+      console.log("Login successful:", response);
+      
+      if (response && (response.token || response.access)) {
+        console.log("Redirecting to dashboard...");
+        router.replace("/dashboard");
+      } else {
+        console.error("Login response missing token:", response);
+        setError("Login failed: Invalid server response");
+      }
     } catch (err) {
-      setError(err.message || "Login failed");
+      console.error("Login error:", err);
+      setError(err.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }

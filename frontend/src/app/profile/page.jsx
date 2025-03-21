@@ -14,7 +14,7 @@ import {
     Legend,
     ArcElement
 } from 'chart.js';
-import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import { Line, Doughnut } from 'react-chartjs-2';
 
 ChartJS.register(
     CategoryScale,
@@ -176,7 +176,12 @@ export default function YourProfile() {
                                 <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">Member since {userData.joinDate}</p>
                             </div>
                         </div>
-                       
+                        <button
+                            className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg shadow-sm transition-colors duration-200 font-medium text-sm sm:text-base"
+                            onClick={() => {}}
+                        >
+                            Withdraw Funds
+                        </button>
                     </div>
                 </div>
 
