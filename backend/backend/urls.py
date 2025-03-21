@@ -24,4 +24,6 @@ urlpatterns = [
     path('indexes/', include('indexes.urls')),
     path('investments/', include('investments.urls')),
     path('insurance/', include('insurance.urls')),
+    path('voting/', include('voting.urls')),
+    path('updates/', include('updates.urls')),
 ]

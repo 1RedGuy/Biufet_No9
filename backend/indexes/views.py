@@ -1,10 +1,11 @@
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Count, Avg, Q
+from django.db.models import Count, Avg, Q, Sum, F, ExpressionWrapper, FloatField
 from .models import Index
 from .serializers import IndexSerializer
 from rest_framework.pagination import PageNumberPagination
+from companies.models import Company
 
 class IndexPagination(PageNumberPagination):
     page_size = 9  # Show 9 indexes per page (3x3 grid)
@@ -54,7 +55,34 @@ class IndexViewSet(viewsets.ModelViewSet):
         return queryset
 
     @action(detail=True, methods=['post'])
+    def add_companies(self, request, pk=None):
+        """Add companies to an index"""
+        index = self.get_object()
+        company_ids = request.data.get('company_ids', [])
+        
+        if not company_ids:
+            return Response(
+                {'error': 'No company_ids provided'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        companies = Company.objects.filter(id__in=company_ids)
+        if not companies:
+            return Response(
+                {'error': 'No valid companies found with provided IDs'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Add companies to the index
+        index.companies.add(*companies)
+        
+        # Update the serialized response
+        serializer = self.get_serializer(index)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
     def activate(self, request, pk=None):
+        """Activate an index"""
         index = self.get_object()
         if index.status != 'draft':
             return Response(
@@ -67,6 +95,7 @@ class IndexViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def archive(self, request, pk=None):
+        """Archive an index"""
         index = self.get_object()
         if index.status == 'archived':
             return Response(
@@ -79,26 +108,52 @@ class IndexViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'])
     def companies_stats(self, request, pk=None):
+        """Get statistics about the companies in an index"""
         index = self.get_object()
+        companies = index.companies.all()
+        
+        # Calculate statistics
         stats = {
-            'total_companies': index.companies.count(),
-            'total_market_cap': sum(c.market_cap or 0 for c in index.companies.all()),
-            'average_price': sum(c.current_price or 0 for c in index.companies.all()) / index.companies.count() if index.companies.exists() else 0,
-            'companies_by_market_cap': list(index.companies.order_by('-market_cap').values('name', 'symbol', 'market_cap')[:10])
+            'total_companies': companies.count(),
+            'total_market_cap': companies.aggregate(Sum('market_cap'))['market_cap__sum'],
+            'highest_price': companies.order_by('-current_price').first(),
+            'lowest_price': companies.order_by('current_price').first(),
         }
-        return Response(stats)
+        
+        # Format the response
+        response_data = {
+            'total_companies': stats['total_companies'],
+            'total_market_cap': stats['total_market_cap'],
+        }
+        
+        if stats['highest_price']:
+            response_data['highest_price'] = {
+                'name': stats['highest_price'].name,
+                'symbol': stats['highest_price'].symbol,
+                'price': stats['highest_price'].current_price
+            }
+            
+        if stats['lowest_price']:
+            response_data['lowest_price'] = {
+                'name': stats['lowest_price'].name,
+                'symbol': stats['lowest_price'].symbol,
+                'price': stats['lowest_price'].current_price
+            }
+            
+        return Response(response_data)
 
     @action(detail=False, methods=['get'])
     def stats(self, request):
-        """Get statistics about indexes"""
-        total_indexes = Index.objects.count()
-        active_indexes = Index.objects.filter(status='active').count()
-        avg_companies = Index.objects.annotate(
-            company_count=Count('companies')
-        ).aggregate(avg=Avg('company_count'))['avg'] or 0
-
-        return Response({
-            'total_indexes': total_indexes,
-            'active_indexes': active_indexes,
-            'average_companies_per_index': round(avg_companies, 2)
-        })
+        """Get overall statistics for all indexes"""
+        indexes = self.get_queryset()
+        
+        # Calculate statistics
+        stats = {
+            'total_indexes': indexes.count(),
+            'active_indexes': indexes.filter(status='active').count(),
+            'voting_indexes': indexes.filter(status='voting').count(),
+            'completed_indexes': indexes.filter(status='completed').count(),
+            'archived_indexes': indexes.filter(status='archived').count(),
+        }
+        
+        return Response(stats)

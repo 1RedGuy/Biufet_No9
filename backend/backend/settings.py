@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework_simplejwt',
     'insurance',
+    'voting',
+    'updates',
 ]
 
 MIDDLEWARE = [

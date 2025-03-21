@@ -2,74 +2,103 @@ from django.db import models
 from django.conf import settings
 from decimal import Decimal
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from django.core.validators import MinValueValidator
 from indexes.models import Index
 from companies.models import Company
 from django.db import transaction
 from rest_framework import serializers
+import uuid
 
 class Investment(models.Model):
     STATUS_CHOICES = [
-        ('PENDING', 'Pending'),
-        ('ACTIVE', 'Active'),
-        ('COMPLETED', 'Completed'),
-        ('WITHDRAWN', 'Withdrawn'),
-        ('FAILED', 'Failed')
+        ('PENDING', _('Pending')),
+        ('ACTIVE', _('Active')),
+        ('VOTED', _('Voted')),
+        ('LOCKED', _('Locked')),
+        ('COMPLETED', _('Completed')),
+        ('WITHDRAWN', _('Withdrawn')),
+        ('FAILED', _('Failed'))
     ]
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE, 
-        related_name='investments'
+        related_name='investments',
+        verbose_name=_('User')
     )
     index = models.ForeignKey(
         Index, 
         on_delete=models.CASCADE, 
-        related_name='investments'
+        related_name='investments',
+        verbose_name=_('Index')
     )
     amount = models.DecimalField(
         max_digits=20, 
         decimal_places=2,
-        help_text="Initial investment amount"
+        validators=[MinValueValidator(0.01)],
+        help_text=_("Initial investment amount"),
+        verbose_name=_('Investment Amount')
     )
     current_value = models.DecimalField(
         max_digits=20, 
         decimal_places=2,
-        help_text="Current value of the investment"
+        help_text=_("Current value of the investment"),
+        verbose_name=_('Current Value'),
+        null=True,
+        blank=True
     )
     profit_loss = models.DecimalField(
         max_digits=20, 
         decimal_places=2, 
         default=Decimal('0.00'),
-        help_text="Current profit or loss"
+        help_text=_("Current profit or loss"),
+        verbose_name=_('Profit/Loss')
     )
     profit_loss_percentage = models.DecimalField(
         max_digits=10, 
         decimal_places=2, 
         default=Decimal('0.00'),
-        help_text="Profit/Loss as a percentage"
+        help_text=_("Profit/Loss as a percentage"),
+        verbose_name=_('Profit/Loss Percentage')
     )
-    investment_date = models.DateTimeField(auto_now_add=True)
+    investment_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_('Investment Date')
+    )
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default='PENDING'
+        default='PENDING',
+        verbose_name=_('Status')
     )
     transaction_id = models.CharField(
         max_length=255, 
         unique=True,
-        help_text="Unique identifier for the investment"
+        help_text=_("Unique identifier for the investment"),
+        verbose_name=_('Transaction ID'),
+        default=uuid.uuid4
     )
     withdrawal_eligible = models.BooleanField(
         default=False,
-        help_text="Whether the investment can be withdrawn"
+        help_text=_("Whether the investment can be withdrawn"),
+        verbose_name=_('Withdrawal Eligible')
     )
     lock_period_end = models.DateTimeField(
-        help_text="Date when the investment can be withdrawn"
+        help_text=_("Date when the investment can be withdrawn"),
+        verbose_name=_('Lock Period End'),
+        null=True,
+        blank=True
     )
-    last_updated = models.DateTimeField(auto_now=True)
+    last_updated = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_('Last Updated')
+    )
 
     class Meta:
         ordering = ['-investment_date']
+        verbose_name = _('Investment')
+        verbose_name_plural = _('Investments')
         indexes = [
             models.Index(fields=['user', 'status']),
             models.Index(fields=['status', 'lock_period_end']),
@@ -82,8 +111,9 @@ class Investment(models.Model):
     def process_investment_credits(self):
         """Process credits for a new investment"""
         if not self.user.deduct_credits(self.amount):
-            raise serializers.ValidationError("Insufficient credits for investment")
+            raise serializers.ValidationError(_("Insufficient credits for investment"))
         self.status = 'ACTIVE'
+        self.current_value = self.amount  # Initially set current value to invested amount
         self.save()
         return True
 
@@ -91,7 +121,7 @@ class Investment(models.Model):
     def process_withdrawal_credits(self):
         """Process credits when withdrawing an investment"""
         if not self.is_withdrawal_eligible():
-            raise serializers.ValidationError("Investment is not eligible for withdrawal")
+            raise serializers.ValidationError(_("Investment is not eligible for withdrawal"))
         
         self.user.add_credits(self.current_value)
         self.status = 'WITHDRAWN'
@@ -121,6 +151,7 @@ class Investment(models.Model):
         """Check if investment can be withdrawn"""
         return (
             self.status == 'ACTIVE' and 
+            self.lock_period_end and
             timezone.now() >= self.lock_period_end
         )
 
@@ -128,43 +159,55 @@ class InvestmentPosition(models.Model):
     investment = models.ForeignKey(
         Investment, 
         on_delete=models.CASCADE,
-        related_name='positions'
+        related_name='positions',
+        verbose_name=_('Investment')
     )
     company = models.ForeignKey(
         Company, 
         on_delete=models.CASCADE,
-        related_name='investment_positions'
+        related_name='investment_positions',
+        verbose_name=_('Company')
     )
     amount = models.DecimalField(
         max_digits=20, 
         decimal_places=2,
-        help_text="Amount allocated to this company"
+        help_text=_("Amount allocated to this company"),
+        verbose_name=_('Amount')
     )
     quantity = models.DecimalField(
         max_digits=20, 
         decimal_places=8,
-        help_text="Number of shares/units"
+        help_text=_("Number of shares/units"),
+        verbose_name=_('Quantity')
     )
     purchase_price = models.DecimalField(
         max_digits=20, 
         decimal_places=2,
-        help_text="Price at time of purchase"
+        help_text=_("Price at time of purchase"),
+        verbose_name=_('Purchase Price')
     )
     current_price = models.DecimalField(
         max_digits=20, 
         decimal_places=2,
-        help_text="Current market price"
+        help_text=_("Current market price"),
+        verbose_name=_('Current Price')
     )
     weight = models.DecimalField(
         max_digits=5, 
         decimal_places=2,
-        help_text="Percentage of total investment"
+        help_text=_("Percentage of total investment"),
+        verbose_name=_('Weight')
     )
-    last_updated = models.DateTimeField(auto_now=True)
+    last_updated = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_('Last Updated')
+    )
 
     class Meta:
         unique_together = ('investment', 'company')
         ordering = ['-weight']
+        verbose_name = _('Investment Position')
+        verbose_name_plural = _('Investment Positions')
         indexes = [
             models.Index(fields=['investment', 'company']),
         ]

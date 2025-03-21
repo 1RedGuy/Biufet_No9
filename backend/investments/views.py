@@ -168,3 +168,76 @@ class InvestmentViewSet(viewsets.ModelViewSet):
         )
         serializer = self.get_serializer(investments, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def generate_positions(self, request, pk=None):
+        """
+        Generate investment positions based on voting results for an individual investment
+        """
+        investment = self.get_object()
+        
+        # Check if investment is in VOTED status
+        if investment.status != 'VOTED':
+            return Response({
+                'error': 'Can only generate positions for investments in VOTED status'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Find the voting session for this investment's index
+        try:
+            from voting.models import VotingSession, VotingResult
+            voting_session = VotingSession.objects.get(index=investment.index)
+            
+            # Check if voting has completed
+            if voting_session.status != 'completed':
+                return Response({
+                    'error': 'Voting must be completed before generating positions'
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+            # Get top voted companies
+            top_companies = VotingResult.objects.filter(
+                session=voting_session
+            ).order_by('rank')[:voting_session.max_votes_allowed]
+            
+            if not top_companies:
+                return Response({
+                    'error': 'No voting results found'
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+            # Calculate equal weight for each company
+            company_count = len(top_companies)
+            company_weight = 100 / company_count
+            
+            # Create positions for each top voted company
+            created_positions = []
+            for result in top_companies:
+                company = result.company
+                position_amount = (investment.amount * company_weight) / 100
+                
+                position, created = InvestmentPosition.objects.update_or_create(
+                    investment=investment,
+                    company=company,
+                    defaults={
+                        'amount': position_amount,
+                        'weight': company_weight,
+                        'quantity': position_amount / (company.current_price or 1),
+                        'purchase_price': company.current_price or 1,
+                        'current_price': company.current_price or 1
+                    }
+                )
+                created_positions.append(position)
+            
+            # Update investment's current value
+            investment.update_current_value()
+            
+            # Update investment status
+            investment.status = 'LOCKED'
+            investment.save()
+            
+            # Return created positions
+            serializer = InvestmentPositionSerializer(created_positions, many=True)
+            return Response(serializer.data)
+            
+        except VotingSession.DoesNotExist:
+            return Response({
+                'error': 'No voting session found for this investment index'
+            }, status=status.HTTP_400_BAD_REQUEST)
