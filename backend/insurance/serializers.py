@@ -40,7 +40,7 @@ class InsurancePolicySerializer(serializers.ModelSerializer):
                  'coverage_amount', 'monthly_premium', 'risk_factor', 'trigger_percentage',
                  'start_date', 'end_date', 'is_active', 'has_claim', 'payments', 
                  'claims', 'calculated_premium']
-        read_only_fields = ['start_date', 'has_claim', 'coverage_amount']
+        read_only_fields = ['start_date', 'has_claim', 'coverage_amount', 'user']
 
     def validate(self, data):
         # Validate minimum investment amount
@@ -62,6 +62,12 @@ class InsurancePolicySerializer(serializers.ModelSerializer):
             )
 
         return data
+
+    def create(self, validated_data):
+        # Get the user from the context
+        user = self.context['request'].user
+        validated_data['user'] = user
+        return super().create(validated_data)
 
     def get_calculated_premium(self, obj):
         return obj.calculate_premium() 
