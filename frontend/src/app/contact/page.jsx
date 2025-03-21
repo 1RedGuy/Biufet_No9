@@ -15,21 +15,18 @@ export default function ContactUs() {
     const validateForm = () => {
         const newErrors = {};
         
-        // Email validation
         if (!formData.email) {
             newErrors.email = 'Email is required';
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
             newErrors.email = 'Please enter a valid email address';
         }
 
-        // Subject validation
         if (!formData.subject) {
             newErrors.subject = 'Subject is required';
         } else if (formData.subject.length < 3) {
             newErrors.subject = 'Subject must be at least 3 characters long';
         }
 
-        // Message validation
         if (!formData.message) {
             newErrors.message = 'Message is required';
         } else if (formData.message.length < 10) {
@@ -51,13 +48,10 @@ export default function ContactUs() {
         setStatus({ type: '', message: '' });
 
         try {
-            // Simulate API call with timeout
             await new Promise(resolve => setTimeout(resolve, 1000));
             
-            // Here you would normally make an API call to send the message
             console.log('Form submitted:', formData);
             
-            // Clear form and show success message
             setFormData({ email: '', subject: '', message: '' });
             setStatus({
                 type: 'success',
@@ -79,7 +73,6 @@ export default function ContactUs() {
             ...prev,
             [name]: value
         }));
-        // Clear error when user starts typing
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,

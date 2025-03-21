@@ -7,28 +7,28 @@ import indexesService from "@/network/indexes";
 export default function Dashboard() {
   const [indexes, setIndexes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState('all');
   const [stats, setStats] = useState({
     total_indexes: 0,
     active_indexes: 0,
     average_companies_per_index: 0,
   });
 
-  // Fetch indexes and stats data on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
         console.log("Dashboard: Starting data fetch");
 
-        // Fetch indexes and stats in parallel
+        const statusParam = activeFilter !== 'all' ? { status: activeFilter } : {};
+
         const [indexesResponse, statsResponse] = await Promise.all([
-          indexesService.getIndexes({ status: "active" }),
+          indexesService.getIndexes(statusParam),
           indexesService.getIndexStats(),
         ]);
 
         console.log("Dashboard: Received indexes response:", indexesResponse);
         console.log("Dashboard: Received stats response:", statsResponse);
 
-        // Process indexes data
         const indexList = indexesResponse.results || [];
 
         const formattedIndexes = indexList.map((index) => ({
@@ -46,14 +46,13 @@ export default function Dashboard() {
         setStats(statsResponse);
       } catch (error) {
         console.error("Dashboard: Error fetching data:", error);
-        // The service will already return mock data on error
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [activeFilter]);
 
   if (loading) {
     return (
@@ -67,7 +66,6 @@ export default function Dashboard() {
     );
   }
 
-  // If no indexes are available, show a message
   if (indexes.length === 0) {
     return (
       <section className="min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-900 dark:to-gray-900">
@@ -95,13 +93,55 @@ export default function Dashboard() {
           <h2 className="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">
             Investment Groups
           </h2>
-          <p className="text-gray-500 dark:text-gray-400 sm:text-xl">
+          <p className="text-gray-500 dark:text-gray-400 sm:text-xl mb-8">
             Select a group to view its companies and choose which one to give
             your vote.
           </p>
+
+          <div className="flex justify-center gap-2 mb-8">
+            <button
+              onClick={() => setActiveFilter('all')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                activeFilter === 'all'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              All Groups
+            </button>
+            <button
+              onClick={() => setActiveFilter('active')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                activeFilter === 'active'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              Active
+            </button>
+            <button
+              onClick={() => setActiveFilter('draft')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                activeFilter === 'draft'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              Draft
+            </button>
+            <button
+              onClick={() => setActiveFilter('archived')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                activeFilter === 'archived'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              Archived
+            </button>
+          </div>
         </div>
 
-        {/* Stats summary cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
           <div className="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
             <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400">
@@ -129,7 +169,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Index cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {indexes.map((index) => (
             <Link
