@@ -100,9 +100,10 @@ export default function Navbar() {
                             <button
                                 onClick={() => router.push('/profile')}
                                 type="button"
-                                className="flex flex-col items-center"
+                                className="flex items-center justify-center w-10 h-10 rounded-full focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 hover:ring-2"
                             >
-                                <div className="relative w-10 h-10 overflow-hidden bg-gray-100 rounded-full dark:bg-gray-600 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 hover:ring-2">
+                                <span className="sr-only">Open user menu</span>
+                                <div className="relative w-10 h-10 overflow-hidden bg-gray-100 rounded-full dark:bg-gray-600">
                                     <svg 
                                         className="absolute w-12 h-12 text-gray-400 -left-1" 
                                         fill="currentColor" 
@@ -116,7 +117,6 @@ export default function Navbar() {
                                         />
                                     </svg>
                                 </div>
-                                <span className="text-xs font-medium mt-1 text-gray-700 dark:text-gray-300">Your Profile</span>
                             </button>
                         </div>
                     </div>
