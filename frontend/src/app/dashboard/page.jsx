@@ -1,91 +1,190 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { dashboardService } from '@/network/dashboard';
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import indexesService from "@/network/indexes";
 
 export default function Dashboard() {
-    const [groups, setGroups] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const [indexes, setIndexes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    total_indexes: 0,
+    active_indexes: 0,
+    average_companies_per_index: 0,
+  });
 
-    useEffect(() => {
-        const fetchGroups = async () => {
-            try {
-                setLoading(true);
-                const data = await dashboardService.getGroups();
-                setGroups(data);
-                setError(null);
-            } catch (err) {
-                setError('Failed to load groups. Please try again later.');
-                console.error('Error:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
+  // Fetch indexes and stats data on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        console.log("Dashboard: Starting data fetch");
 
-        fetchGroups();
-    }, []);
+        // Fetch indexes and stats in parallel
+        const [indexesResponse, statsResponse] = await Promise.all([
+          indexesService.getIndexes({ status: "active" }),
+          indexesService.getIndexStats(),
+        ]);
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-900 dark:to-gray-900 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
-            </div>
-        );
-    }
+        console.log("Dashboard: Received indexes response:", indexesResponse);
+        console.log("Dashboard: Received stats response:", statsResponse);
 
-    if (error) {
-        return (
-            <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-900 dark:to-gray-900 flex items-center justify-center">
-                <div className="text-center">
-                    <p className="text-red-600 dark:text-red-400 text-lg">{error}</p>
-                    <button 
-                        onClick={() => window.location.reload()} 
-                        className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                    >
-                        Try Again
-                    </button>
-                </div>
-            </div>
-        );
-    }
+        // Process indexes data
+        const indexList = indexesResponse.results || [];
 
+        const formattedIndexes = indexList.map((index) => ({
+          id: index.id,
+          name: index.name,
+          description: index.description,
+          companyCount: index.company_count || 0,
+          totalInvestment: index.total_investment
+            ? `$${(index.total_investment / 1000000).toFixed(1)}M`
+            : "$0M",
+          path: `/dashboard/${index.id}`,
+        }));
+
+        setIndexes(formattedIndexes);
+        setStats(statsResponse);
+      } catch (error) {
+        console.error("Dashboard: Error fetching data:", error);
+        // The service will already return mock data on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
     return (
-        <section className="min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-900 dark:to-gray-900">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {groups.map((group) => (
-                        <Link 
-                            key={group.id}
-                            href={`/dashboard/${group.id}`}
-                            className="group bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-6 hover:shadow-lg transition-all duration-300 relative overflow-hidden"
-                        >
-                            <div className="relative z-10">
-                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                                    {group.name}
-                                </h3>
-                                <p className="mt-2 text-gray-600 dark:text-gray-300">
-                                    {group.description}
-                                </p>
-                                <div className="mt-4 flex justify-between items-end">
-                                    <div>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            Companies: {group.companyCount}
-                                        </p>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            Total Investment: {group.totalInvestment}
-                                        </p>
-                                    </div>
-                                    <span className="text-6xl font-bold text-gray-200 dark:text-gray-700 absolute bottom-4 right-4 transition-transform group-hover:scale-110">
-                                        {String(group.id).padStart(2, '0')}
-                                    </span>
-                                </div>
-                            </div>
-                        </Link>
-                    ))}
-                </div>
-            </div>
-        </section>
+      <section className="min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-900 dark:to-gray-900">
+        <div className="py-8 px-4 mx-auto max-w-screen-xl sm:py-16 lg:px-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+          </div>
+        </div>
+      </section>
     );
+  }
+
+  // If no indexes are available, show a message
+  if (indexes.length === 0) {
+    return (
+      <section className="min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-900 dark:to-gray-900">
+        <div className="py-8 px-4 mx-auto max-w-screen-xl sm:py-16 lg:px-6">
+          <div className="lg:mt-14 mt-20 mx-auto max-w-screen-md text-center mb-8 lg:mb-16">
+            <h2 className="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">
+              Investment Groups
+            </h2>
+            <p className="text-gray-500 dark:text-gray-400 sm:text-xl mb-8">
+              No investment groups available at the moment.
+            </p>
+            <div className="inline-block px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+              <Link href="/auth/login">Log in to view investment groups</Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-900 dark:to-gray-900">
+      <div className="py-8 px-4 mx-auto max-w-screen-xl sm:py-16 lg:px-6">
+        <div className="lg:mt-14 mt-20 mx-auto max-w-screen-md text-center mb-8 lg:mb-16">
+          <h2 className="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">
+            Investment Groups
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 sm:text-xl">
+            Select a group to view its companies and choose which one to give
+            your vote.
+          </p>
+        </div>
+
+        {/* Stats summary cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+          <div className="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
+            <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400">
+              Total Groups
+            </h3>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white">
+              {stats.total_indexes}
+            </p>
+          </div>
+          <div className="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
+            <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400">
+              Active Groups
+            </h3>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white">
+              {stats.active_indexes}
+            </p>
+          </div>
+          <div className="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
+            <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400">
+              Avg. Companies
+            </h3>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white">
+              {stats.average_companies_per_index}
+            </p>
+          </div>
+        </div>
+
+        {/* Index cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {indexes.map((index) => (
+            <Link
+              key={index.id}
+              href={index.path}
+              className="group relative p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 dark:bg-gray-800 min-h-[200px] flex flex-col cursor-pointer hover:-translate-y-1"
+            >
+              <div className="h-full flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex justify-center items-center w-10 h-10 rounded-lg bg-primary-100 lg:h-12 lg:w-12 dark:bg-primary-900 group-hover:bg-primary-200 dark:group-hover:bg-primary-800 transition-colors">
+                      <svg
+                        className="w-5 h-5 text-primary-600 lg:w-6 lg:h-6 dark:text-primary-300 group-hover:text-primary-700 dark:group-hover:text-primary-200 transition-colors"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L8 10.414l1.293 1.293a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-primary-600 dark:text-primary-400">
+                        <span className="text-gray-500 dark:text-gray-400">
+                          Invested{" "}
+                        </span>
+                        <span className="block mt-1 text-base font-bold">
+                          {index.totalInvestment}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                  <h3 className="mb-2 text-xl font-bold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                    {index.name}
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    {index.description}
+                  </p>
+                </div>
+                <div className="mt-4 flex items-center justify-between text-gray-600 dark:text-gray-300 text-sm font-medium">
+                  <span className="text-xl">
+                    {index.companyCount} Companies
+                  </span>
+                  <span className="text-primary-600 dark:text-primary-400 group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors">
+                    View →
+                  </span>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 }

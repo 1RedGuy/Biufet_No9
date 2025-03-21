@@ -20,8 +20,8 @@ class IndexViewSet(viewsets.ModelViewSet):
         queryset = Index.objects.all()
         
         # Filter by status
-        status = self.request.query_params.get('status', 'active')
-        if status:
+        status = self.request.query_params.get('status', None)
+        if status != None:
             queryset = queryset.filter(status=status)
         
         # Filter by search term
