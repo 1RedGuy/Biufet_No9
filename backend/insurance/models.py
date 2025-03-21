@@ -3,6 +3,8 @@ from django.conf import settings
 from decimal import Decimal
 from django.core.validators import MinValueValidator, MaxValueValidator
 from indexes.models import Index
+from .services import RiskCalculationService
+from django.core.exceptions import ValidationError
 
 # Create your models here.
 
@@ -29,7 +31,8 @@ class InsurancePolicy(models.Model):
         max_digits=5, 
         decimal_places=2, 
         default=Decimal('1.00'),
-        validators=[MinValueValidator(Decimal('0.1')), MaxValueValidator(Decimal('10.0'))]
+        validators=[MinValueValidator(Decimal('0.1')), MaxValueValidator(Decimal('10.0'))],
+        help_text="Risk factor between 0.1 and 10.0, calculated based on various risk metrics"
     )
     trigger_percentage = models.DecimalField(
         max_digits=5,
@@ -50,8 +53,25 @@ class InsurancePolicy(models.Model):
     def __str__(self):
         return f"Insurance Policy for {self.user.username} - Index: {self.index.name}"
 
+    def calculate_risk_factor(self):
+        """Calculate the risk factor for this policy"""
+        return RiskCalculationService.calculate_investment_risk_factor(
+            self.initial_investment_amount,
+            self.index,
+            self.user
+        )
+
     def calculate_premium(self):
-        return self.monthly_premium * self.risk_factor
+        """Calculate monthly premium based on risk factor"""
+        base_premium = self.monthly_premium
+        current_risk = self.calculate_risk_factor()
+        
+        # Update stored risk factor if it has changed
+        if self.risk_factor != current_risk:
+            self.risk_factor = current_risk
+            self.save(update_fields=['risk_factor'])
+        
+        return base_premium * current_risk
 
     def calculate_payout_amount(self, current_value):
         """
@@ -66,6 +86,17 @@ class InsurancePolicy(models.Model):
         
         loss_amount = trigger_value - current_value
         return min(loss_amount, self.coverage_amount)
+
+    def clean(self):
+        super().clean()
+        if self.coverage_amount > Decimal('5000.00'):
+            raise ValidationError("Maximum coverage amount is 5000 credits")
+
+    def save(self, *args, **kwargs):
+        if not self.pk:  # New policy
+            # Calculate initial risk factor
+            self.risk_factor = self.calculate_risk_factor()
+        super().save(*args, **kwargs)
 
 class CoveragePayment(models.Model):
     policy = models.ForeignKey(InsurancePolicy, on_delete=models.CASCADE, related_name='payments')
