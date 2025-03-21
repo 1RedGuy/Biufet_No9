@@ -3,10 +3,29 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 export default function Navbar() {
     const pathname = usePathname();
     const router = useRouter();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    // Close mobile menu when route changes
+    useEffect(() => {
+        setIsMenuOpen(false);
+    }, [pathname]);
+
+    // Close mobile menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (isMenuOpen && !event.target.closest('.mobile-menu-container') && !event.target.closest('.menu-button')) {
+                setIsMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [isMenuOpen]);
 
     // Check if we're on an auth page
     const isAuthPage = pathname?.startsWith('/login') || 
@@ -26,7 +45,7 @@ export default function Navbar() {
                             </span>
                         </Link>
                         
-                        {/* Centered Navigation */}
+                        {/* Centered Navigation - Desktop */}
                         <div className="hidden lg:flex items-center justify-center flex-1 gap-12">
                             <Link 
                                 href="/" 
@@ -60,28 +79,85 @@ export default function Navbar() {
                             </Link>
                         </div>
 
-                        <button
-                            onClick={() => router.push('/profile')}
-                            type="button"
-                            className="flex items-center justify-center w-10 h-10 rounded-full focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 hover:ring-2"
-                        >
-                            <span className="sr-only">Open user menu</span>
-                            <div className="relative w-10 h-10 overflow-hidden bg-gray-100 rounded-full dark:bg-gray-600">
-                                <svg 
-                                    className="absolute w-12 h-12 text-gray-400 -left-1" 
-                                    fill="currentColor" 
-                                    viewBox="0 0 20 20" 
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <path 
-                                        fillRule="evenodd" 
-                                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" 
-                                        clipRule="evenodd"
-                                    />
-                                </svg>
-                            </div>
-                        </button>
+                        <div className="flex items-center gap-4">
+                            {/* Mobile Menu Button */}
+                            <button 
+                                className="lg:hidden menu-button flex items-center justify-center w-10 h-10 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md focus:outline-none"
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                aria-label="Toggle menu"
+                            >
+                                {isMenuOpen ? (
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                ) : (
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                    </svg>
+                                )}
+                            </button>
+
+                            <button
+                                onClick={() => router.push('/profile')}
+                                type="button"
+                                className="flex items-center justify-center w-10 h-10 rounded-full focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 hover:ring-2"
+                            >
+                                <span className="sr-only">Open user menu</span>
+                                <div className="relative w-10 h-10 overflow-hidden bg-gray-100 rounded-full dark:bg-gray-600">
+                                    <svg 
+                                        className="absolute w-12 h-12 text-gray-400 -left-1" 
+                                        fill="currentColor" 
+                                        viewBox="0 0 20 20" 
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        <path 
+                                            fillRule="evenodd" 
+                                            d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" 
+                                            clipRule="evenodd"
+                                        />
+                                    </svg>
+                                </div>
+                            </button>
+                        </div>
                     </div>
+
+                    {/* Mobile Menu */}
+                    {isMenuOpen && (
+                        <div className="lg:hidden mobile-menu-container mt-4 py-3 px-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+                            <div className="flex flex-col space-y-4">
+                                <Link 
+                                    href="/" 
+                                    className={`${
+                                        pathname === '/' 
+                                        ? 'text-primary-600 dark:text-white bg-gray-100 dark:bg-gray-700' 
+                                        : 'text-gray-700 dark:text-gray-300'
+                                    } text-lg font-medium transition-colors py-2 px-4 rounded-md hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-white`}
+                                >
+                                    Home
+                                </Link>
+                                <Link 
+                                    href="/dashboard" 
+                                    className={`${
+                                        pathname.startsWith('/dashboard')
+                                        ? 'text-primary-600 dark:text-white bg-gray-100 dark:bg-gray-700' 
+                                        : 'text-gray-700 dark:text-gray-300'
+                                    } text-lg font-medium transition-colors py-2 px-4 rounded-md hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-white`}
+                                >
+                                    Dashboard
+                                </Link>
+                                <Link 
+                                    href="/contact" 
+                                    className={`${
+                                        pathname === '/contact' 
+                                        ? 'text-primary-600 dark:text-white bg-gray-100 dark:bg-gray-700' 
+                                        : 'text-gray-700 dark:text-gray-300'
+                                    } text-lg font-medium transition-colors py-2 px-4 rounded-md hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-white`}
+                                >
+                                    Contact Us
+                                </Link>
+                            </div>
+                        </div>
+                    )}
                 </nav>
             </header>
             <div className="h-[88px]" />

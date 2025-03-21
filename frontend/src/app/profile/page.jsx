@@ -242,8 +242,8 @@ export default function YourProfile() {
                     </div>
                 </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
-          <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-4 sm:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8">
+          <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-4 sm:p-6 flex flex-col items-center md:items-start text-center md:text-left">
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">
               Total Current Value
             </h3>
@@ -251,20 +251,24 @@ export default function YourProfile() {
               {formatCurrency(userData.total_investments)}
             </p>
           </div>
-          <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-4 sm:p-6">
+          <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-4 sm:p-6 flex flex-col items-center md:items-start text-center md:text-left">
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">
               Portfolio Growth
             </h3>
-            <p className="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400">
+            <p className={`text-2xl sm:text-3xl font-bold ${
+              userData.portfolio_growth_percentage >= 0 
+                ? 'text-green-600 dark:text-green-400' 
+                : 'text-red-600 dark:text-red-400'
+            }`}>
               {userData.portfolio_growth_percentage.toFixed(1)}%
             </p>
           </div>
-          <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-4 sm:p-6">
+          <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-4 sm:p-6 flex flex-col items-center md:items-start text-center md:text-left">
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Available Credits
+              Initial Investment
             </h3>
             <p className="text-2xl sm:text-3xl font-bold text-gray-700 dark:text-gray-300">
-              {formatCurrency(userData.credits || 0)}
+              {formatCurrency(userData.active_investments.reduce((total, inv) => total + inv.amount, 0))}
             </p>
           </div>
         </div>
