@@ -56,7 +56,7 @@ export default function Register() {
     <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white dark:from-primary-950 dark:to-gray-950 pt-20">
       <div className="flex flex-col items-center justify-center px-4 py-8 mx-auto md:h-screen lg:py-0">
         <Link href="/" className="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
-          Biufet
+          Comdex
         </Link>
         <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
           <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
