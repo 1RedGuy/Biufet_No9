@@ -45,10 +45,11 @@ INSTALLED_APPS = [
     'accounts',
     'companies',
     'indexes',
+    'investments',
     'rest_framework',
     'corsheaders',
-    'investments',
     'rest_framework_simplejwt',
+    'insurance',
 ]
 
 MIDDLEWARE = [
