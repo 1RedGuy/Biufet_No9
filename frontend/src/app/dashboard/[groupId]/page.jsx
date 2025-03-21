@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import indexesService from "@/network/indexes";
 import investmentsService from "@/network/investments";
-import voteService from "@/network/vote";
 
 export default function GroupPage() {
   const { groupId } = useParams();
@@ -17,11 +17,6 @@ export default function GroupPage() {
   const [investAmount, setInvestAmount] = useState(100);
   const [isInvesting, setIsInvesting] = useState(false);
   const [investmentError, setInvestmentError] = useState(null);
-  const [activeVotingSession, setActiveVotingSession] = useState(null);
-  const [userVotes, setUserVotes] = useState([]);
-  const [votingResults, setVotingResults] = useState({});
-  const [isVoting, setIsVoting] = useState(false);
-  const [voteError, setVoteError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,7 +31,6 @@ export default function GroupPage() {
 
         console.log("Group page: Received index details:", indexDetails);
         console.log("Group page: Received company stats:", indexCompaniesStats);
-        console.log("Index status:", indexDetails?.status);
 
         if (!indexDetails) {
           setError("Index not found or you do not have permission to view it");
@@ -45,38 +39,6 @@ export default function GroupPage() {
 
         setIndexData(indexDetails);
         setCompanyStats(indexCompaniesStats);
-        
-        // Check if index is in voting status
-        if (indexDetails.status === "voting") {
-          console.log("Index is in voting status, fetching voting data...");
-          try {
-            // Force the groupId to be a number
-            const numericGroupId = Number(groupId);
-            const votingSession = await voteService.getActiveVotingSession(numericGroupId);
-            console.log("Retrieved voting session:", votingSession);
-            
-            if (votingSession) {
-              setActiveVotingSession(votingSession);
-              
-              // Get user's existing votes
-              const votes = await voteService.getUserVotes(votingSession.id);
-              console.log("User votes:", votes);
-              setUserVotes(votes);
-              
-              // Get current voting results
-              const results = await voteService.getVotingResults(votingSession.id);
-              console.log("Voting results:", results);
-              setVotingResults(results);
-            } else {
-              console.log("No active voting session found for this index");
-              setVoteError("This index is in voting status, but no active voting session was found.");
-            }
-          } catch (voteErr) {
-            console.error("Error fetching voting data:", voteErr);
-            setVoteError("Error loading voting data. Please try again later.");
-          }
-        }
-        
         setError(null);
       } catch (err) {
         console.error("Error fetching index data:", err);
@@ -120,8 +82,10 @@ export default function GroupPage() {
     try {
       await investmentsService.createInvestment(Number(groupId), investAmount);
 
+      // Close modal
       setShowInvestModal(false);
 
+      // Refresh data
       const [indexDetails, indexCompaniesStats] = await Promise.all([
         indexesService.getIndexDetails(Number(groupId)),
         indexesService.getIndexCompaniesStats(Number(groupId)),
@@ -130,6 +94,7 @@ export default function GroupPage() {
       setIndexData(indexDetails);
       setCompanyStats(indexCompaniesStats);
 
+      // Show success message or notification here if needed
     } catch (err) {
       console.error("Error creating investment:", err);
       setInvestmentError(
@@ -139,85 +104,6 @@ export default function GroupPage() {
     } finally {
       setIsInvesting(false);
     }
-  };
-
-  const handleVote = async (companyId) => {
-    console.log("Vote button clicked for company:", companyId);
-    console.log("Active voting session:", activeVotingSession);
-    
-    if (!activeVotingSession) {
-      console.error("No active voting session found");
-      setVoteError("No active voting session available");
-      return;
-    }
-    
-    // Check if user has already voted
-    if (userVotes && userVotes.some(vote => vote.company === companyId)) {
-      setVoteError("You have already voted for this company");
-      setTimeout(() => setVoteError(null), 3000);
-      return;
-    }
-    
-    setIsVoting(true);
-    setVoteError(null);
-    
-    try {
-      // Submit vote to backend
-      const voteResult = await voteService.voteForCompany(activeVotingSession.id, companyId);
-      console.log("Vote result:", voteResult);
-      
-      // Update user votes
-      const votes = await voteService.getUserVotes(activeVotingSession.id);
-      
-      // If using mock session, manually add this vote
-      if (activeVotingSession.id === 1) {
-        // Add new vote to existing votes
-        setUserVotes([...userVotes, { company: companyId, session: activeVotingSession.id }]);
-        
-        // Create mock results
-        const mockResults = {
-          results: indexData.companies.map(c => ({
-            company: c.id,
-            company_name: c.name,
-            votes: c.id === companyId ? 1 : 0,
-            percentage: c.id === companyId ? 100 : 0
-          }))
-        };
-        setVotingResults(mockResults);
-      } else {
-        // Real API response
-        console.log("Updated user votes:", votes);
-        setUserVotes(votes);
-        
-        // Update voting results
-        const results = await voteService.getVotingResults(activeVotingSession.id);
-        console.log("Updated voting results:", results);
-        setVotingResults(results);
-      }
-    } catch (err) {
-      console.error("Error submitting vote:", err);
-      setVoteError(
-        err.response?.data?.detail || 
-        err.response?.data?.error ||
-        "Failed to submit your vote. Please try again."
-      );
-      setTimeout(() => setVoteError(null), 3000);
-    } finally {
-      setIsVoting(false);
-    }
-  };
-
-  const hasVotedFor = (companyId) => {
-    return userVotes && userVotes.some(vote => vote.company === companyId);
-  };
-
-  const getVoteWeight = (companyId) => {
-    if (!votingResults || !votingResults.results) {
-      return "0.0";
-    }
-    
-    const result = votingResults.results.find(r => r.company === companyId);
-    return result ? result.percentage.toFixed(1) : "0.0";
   };
 
   if (loading) {
@@ -424,12 +310,6 @@ export default function GroupPage() {
             </div>
           </div>
         )}
-        
-        {voteError && (
-          <div className="mb-6 p-3 rounded bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm">
-            {voteError}
-          </div>
-        )}
 
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
           Companies
@@ -471,38 +351,13 @@ export default function GroupPage() {
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       Market Cap: ${(company.market_cap / 1000000).toFixed(1)}M
                     </p>
-                    {indexData.status === "voting" && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Vote Weight: {getVoteWeight(company.id)}%
-                      </p>
-                    )}
                   </div>
-                  {indexData.status === "voting" ? (
-                    hasVotedFor(company.id) ? (
-                      <span className="ml-4 px-4 py-1.5 bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-400 rounded-lg text-sm font-medium flex items-center">
-                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                        </svg>
-                        Voted
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => handleVote(company.id)}
-                        disabled={isVoting}
-                        className={`ml-4 px-4 py-1.5 border border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white rounded-lg transition-colors text-sm font-medium ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        {isVoting ? 'Voting...' : 'Vote'}
-                      </button>
-                    )
-                  ) : (
-                    <button
-                      className="ml-4 px-4 py-1.5 border border-gray-300 text-gray-400 rounded-lg text-sm font-medium cursor-not-allowed"
-                      disabled
-                      title={indexData.status === "active" ? "Voting not active yet" : "Voting period ended"}
-                    >
-                      Vote
-                    </button>
-                  )}
+                  <button
+                    className="ml-4 px-4 py-1.5 border border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white rounded-lg transition-colors text-sm font-medium"
+                    onClick={() => {}}
+                  >
+                    Vote
+                  </button>
                 </div>
               </div>
             ))}
@@ -516,6 +371,7 @@ export default function GroupPage() {
         )}
       </div>
 
+      {/* Investment Modal */}
       {showInvestModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 relative">
