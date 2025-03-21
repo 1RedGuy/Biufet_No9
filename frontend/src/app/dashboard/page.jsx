@@ -16,16 +16,18 @@ export default function Dashboard() {
   });
 
   const statusColors = {
-    draft: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
-    active: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-    executed: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-    archived: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
+    draft: 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-100',
+    voting: 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100',
+    active: 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100',
+    archived: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100',
+    executed: 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
   };
 
   const getStatusLabel = (status) => {
     const labels = {
       draft: 'Draft',
-      active: 'Active (Voting)',
+      voting: 'Voting',
+      active: 'Active',
       executed: 'Executed',
       archived: 'Archived'
     };
@@ -122,68 +124,68 @@ export default function Dashboard() {
           <h2 className="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">
             Investment Groups
           </h2>
-          <p className="text-gray-500 dark:text-gray-400 sm:text-xl mb-8">
+          <p className="text-gray-600 dark:text-gray-300 sm:text-xl mb-8">
             Select a group to view its companies and choose which one to give
             your vote.
           </p>
 
-          <div className="flex justify-center gap-2 mb-8">
+          <div className="flex flex-wrap justify-center gap-2 mb-8">
             <button
               onClick={() => setActiveFilter("all")}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg transition-colors whitespace-nowrap ${
                 activeFilter === "all"
-                  ? "bg-primary-600 text-white"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  ? "bg-primary-600 text-white hover:bg-primary-700"
+                  : "bg-white/90 dark:bg-gray-700/90 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
               }`}
             >
               All Groups
             </button>
             <button
               onClick={() => setActiveFilter("active")}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg transition-colors whitespace-nowrap ${
                 activeFilter === "active"
-                  ? "bg-primary-600 text-white"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  ? "bg-primary-600 text-white hover:bg-primary-700"
+                  : "bg-white/90 dark:bg-gray-700/90 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
               }`}
             >
               Active
             </button>
             <button
               onClick={() => setActiveFilter("voting")}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg transition-colors whitespace-nowrap ${
                 activeFilter === "voting"
-                  ? "bg-primary-600 text-white"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  ? "bg-primary-600 text-white hover:bg-primary-700"
+                  : "bg-white/90 dark:bg-gray-700/90 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
               }`}
             >
               Voting
             </button>
             <button
               onClick={() => setActiveFilter("draft")}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg transition-colors whitespace-nowrap ${
                 activeFilter === "draft"
-                  ? "bg-primary-600 text-white"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  ? "bg-primary-600 text-white hover:bg-primary-700"
+                  : "bg-white/90 dark:bg-gray-700/90 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
               }`}
             >
               Draft
             </button>
             <button
               onClick={() => setActiveFilter("archived")}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg transition-colors whitespace-nowrap ${
                 activeFilter === "archived"
-                  ? "bg-primary-600 text-white"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  ? "bg-primary-600 text-white hover:bg-primary-700"
+                  : "bg-white/90 dark:bg-gray-700/90 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
               }`}
             >
               Archived
             </button>
             <button
-              onClick={() => setActiveFilter('executed')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                activeFilter === 'executed'
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              onClick={() => setActiveFilter("executed")}
+              className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg transition-colors whitespace-nowrap ${
+                activeFilter === "executed"
+                  ? "bg-primary-600 text-white hover:bg-primary-700"
+                  : "bg-white/90 dark:bg-gray-700/90 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
               }`}
             >
               Executed
@@ -191,25 +193,25 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-          <div className="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
-            <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-10">
+          <div className="md:col-span-4 p-6 bg-white/90 dark:bg-gray-700/90 rounded-xl shadow-lg dark:bg-gray-800">
+            <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300">
               Total Groups
             </h3>
             <p className="text-3xl font-bold text-gray-900 dark:text-white">
               {stats.total_indexes}
             </p>
           </div>
-          <div className="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
-            <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400">
+          <div className="md:col-span-4 p-6 bg-white/90 dark:bg-gray-700/90 rounded-xl shadow-lg dark:bg-gray-800">
+            <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300">
               Active Groups
             </h3>
             <p className="text-3xl font-bold text-gray-900 dark:text-white">
               {stats.active_indexes}
             </p>
           </div>
-          <div className="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
-            <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400">
+          <div className="md:col-span-4 p-6 bg-white/90 dark:bg-gray-700/90 rounded-xl shadow-lg dark:bg-gray-800">
+            <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300">
               Avg. Companies
             </h3>
             <p className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -218,12 +220,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           {indexes.map((index) => (
             <Link
               key={index.id}
               href={index.path}
-              className="group relative p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 dark:bg-gray-800 min-h-[200px] flex flex-col cursor-pointer hover:-translate-y-1"
+              className="md:col-span-4 group relative p-6 bg-white/90 dark:bg-gray-700/90 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 dark:bg-gray-800 min-h-[200px] flex flex-col cursor-pointer hover:-translate-y-1"
             >
               <div className="h-full flex flex-col justify-between">
                 <div>
@@ -244,7 +246,7 @@ export default function Dashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-primary-600 dark:text-primary-400">
-                        <span className="text-gray-500 dark:text-gray-400">
+                        <span className="text-gray-600 dark:text-gray-300">
                           Invested{" "}
                         </span>
                         <span className="block mt-1 text-base font-bold">
@@ -256,28 +258,10 @@ export default function Dashboard() {
                   <h3 className="mb-2 text-xl font-bold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                     {index.name}
                   </h3>
-                  <p className="text-gray-500 dark:text-gray-400">
-                    {index.status && (
-                      <span className={`inline-block px-2.5 py-0.5 text-sm font-medium rounded-full ${statusColors[index.status]}`}>
-                        {getStatusLabel(index.status)}
-                      </span>
-                    )}
-                  </p>
                   {index.status && (
                     <div className="mt-2">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          index.status === "active"
-                            ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
-                            : index.status === "voting"
-                            ? "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
-                            : index.status === "executed"
-                            ? "bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100"
-                            : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
-                        }`}
-                      >
-                        {index.status.charAt(0).toUpperCase() +
-                          index.status.slice(1)}
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusColors[index.status]}`}>
+                        {getStatusLabel(index.status)}
                       </span>
                     </div>
                   )}
