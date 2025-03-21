@@ -180,3 +180,37 @@ class IndexViewSet(viewsets.ModelViewSet):
         index.status = 'draft'
         index.save()
         return Response(self.get_serializer(index).data)
+
+    @action(detail=True, methods=['get'])
+    def company_vote_weights(self, request, pk=None):
+        """
+        Get the vote weights for all companies in this index.
+        Only accessible when the index status is 'voting' or after.
+        """
+        index = self.get_object()
+        
+        # Only provide vote weights if the index is in voting or later stage
+        if index.status not in ['voting', 'executed', 'archived']:
+            return Response(
+                {"detail": f"Vote weights not available. Index status: {index.status}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get all companies in this index with their vote weights
+        from voting.models import CompanyVoteCount
+        vote_counts = CompanyVoteCount.objects.filter(index=index).select_related('company')
+        
+        # Prepare the response data
+        data = [{
+            'company_id': vc.company.id,
+            'company_name': vc.company.name,
+            'company_symbol': vc.company.symbol,
+            'sector': vc.company.sector,
+            'total_weight': vc.total_weight,
+            'vote_count': vc.vote_count
+        } for vc in vote_counts]
+        
+        # Sort by total weight descending
+        data.sort(key=lambda x: x['total_weight'], reverse=True)
+        
+        return Response(data)

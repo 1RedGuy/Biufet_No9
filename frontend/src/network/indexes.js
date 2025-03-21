@@ -228,6 +228,25 @@ const indexesService = {
       throw error;
     }
   },
+
+  async getCompanyVoteWeights(id) {
+    try {
+      const token = Cookies.get(AUTH_TOKEN_KEY);
+      if (!token) {
+        return [];
+      }
+
+      const api = createApiInstance();
+      const response = await api.get(`indexes/${id}/company_vote_weights/`);
+      return response.data;
+    } catch (error) {
+      console.error(
+        `Failed to fetch company vote weights for index ID ${id}:`,
+        error.message
+      );
+      return [];
+    }
+  },
 };
 
 export default indexesService;

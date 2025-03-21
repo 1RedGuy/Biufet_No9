@@ -72,6 +72,11 @@ class Investment(models.Model):
         default='PENDING',
         verbose_name=_('Status')
     )
+    has_voted = models.BooleanField(
+        default=False,
+        help_text=_("Whether this investment has been used for voting"),
+        verbose_name=_('Has Voted')
+    )
     transaction_id = models.CharField(
         max_length=255, 
         unique=True,

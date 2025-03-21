@@ -7,6 +7,7 @@ class Index(models.Model):
     STATUS_CHOICES = [
         ('draft', _('Draft')),           # Initial state
         ('active', _('Active')),         # Ready for investments and voting
+        ('voting', _('Voting')),         # In voting phase
         ('executed', _('Executed')),     # Voting completed and investments processed
         ('archived', _('Archived')),     # No longer active
     ]
@@ -77,3 +78,16 @@ class Index(models.Model):
             raise ValidationError(_('Number of companies cannot be less than minimum companies'))
         if self.companies.count() > self.max_companies:
             raise ValidationError(_('Number of companies cannot be more than maximum companies'))
+
+    def is_voting_active(self):
+        """Check if the index is currently in voting phase"""
+        return self.status == 'voting'
+
+    def get_total_vote_weight_for_company(self, company):
+        """Get the total vote weight for a company in this index"""
+        from voting.models import CompanyVoteCount
+        try:
+            count = CompanyVoteCount.objects.get(index=self, company=company)
+            return count.total_weight
+        except CompanyVoteCount.DoesNotExist:
+            return 0

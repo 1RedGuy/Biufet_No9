@@ -39,19 +39,3 @@ class Company(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.symbol})"
-
-class Vote(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name=_('User'))
-    investment = models.ForeignKey('investments.Investment', on_delete=models.CASCADE, verbose_name=_('Investment'))
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, verbose_name=_('Company'))
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'votes'
-        verbose_name = _('Vote')
-        verbose_name_plural = _('Votes')
-        ordering = ['-created_at']
-        unique_together = ['user', 'investment', 'company']
-
-    def __str__(self):
-        return f"{self.user.username} voted for {self.company.name}"

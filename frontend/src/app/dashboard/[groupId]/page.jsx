@@ -5,7 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import indexesService from "@/network/indexes";
 import investmentsService from "@/network/investments";
-import { getUserCredits } from '@/network/deposit-money';
+import { getUserCredits } from "@/network/deposit-money";
+import votingService from "@/network/voting";
 
 export default function GroupPage() {
   const { groupId } = useParams();
@@ -19,8 +20,39 @@ export default function GroupPage() {
   const [isInvesting, setIsInvesting] = useState(false);
   const [investmentError, setInvestmentError] = useState(null);
   const [userCredits, setUserCredits] = useState(0);
+  const [voteWeights, setVoteWeights] = useState([]);
+  const [loadingVoteWeights, setLoadingVoteWeights] = useState(false);
+  const [votingStatus, setVotingStatus] = useState(null);
+  const [selectedCompanies, setSelectedCompanies] = useState([]);
+  const [showVoteModal, setShowVoteModal] = useState(false);
+  const [activeInvestment, setActiveInvestment] = useState(null);
+  const [isVoting, setIsVoting] = useState(false);
+  const [voteError, setVoteError] = useState(null);
+  const [voteSuccess, setVoteSuccess] = useState(false);
+  const [debugMessage, setDebugMessage] = useState("");
+
+  // Debug function to check connection to the backend
+  const testBackendConnection = async () => {
+    try {
+      setDebugMessage("Testing connection to backend...");
+      // First try to get voting status to see if the endpoint works
+      const status = await votingService.getIndexVotingStatus(Number(groupId));
+      console.log("Connection test - voting status:", status);
+      setDebugMessage(
+        `Connection successful! Voting status: ${JSON.stringify(status)}`
+      );
+      return true;
+    } catch (err) {
+      console.error("Connection test failed:", err);
+      setDebugMessage(`Connection failed: ${err.message}`);
+      return false;
+    }
+  };
 
   useEffect(() => {
+    // Test connection when component mounts
+    testBackendConnection();
+
     const fetchData = async () => {
       try {
         console.log(`Group page: Fetching data for index ID ${groupId}`);
@@ -41,6 +73,46 @@ export default function GroupPage() {
 
         setIndexData(indexDetails);
         setCompanyStats(indexCompaniesStats);
+
+        // Always try to fetch voting status for any index, not just in voting status
+        try {
+          const status = await votingService.getIndexVotingStatus(
+            Number(groupId)
+          );
+          console.log("Group page: Received voting status:", status);
+          setVotingStatus(status);
+
+          // If user has active investments, set the first one as default
+          if (
+            status.active_investments &&
+            status.active_investments.length > 0
+          ) {
+            setActiveInvestment(status.active_investments[0]);
+          }
+        } catch (statusError) {
+          console.error("Error fetching voting status:", statusError);
+        }
+
+        // If index is in voting status or later, fetch vote weights
+        if (
+          indexDetails.status === "voting" ||
+          indexDetails.status === "executed" ||
+          indexDetails.status === "archived"
+        ) {
+          setLoadingVoteWeights(true);
+          try {
+            const weights = await indexesService.getCompanyVoteWeights(
+              Number(groupId)
+            );
+            console.log("Group page: Received vote weights:", weights);
+            setVoteWeights(weights);
+          } catch (weightsError) {
+            console.error("Error fetching vote weights:", weightsError);
+          } finally {
+            setLoadingVoteWeights(false);
+          }
+        }
+
         setError(null);
       } catch (err) {
         console.error("Error fetching index data:", err);
@@ -66,8 +138,10 @@ export default function GroupPage() {
       setShowInvestModal(true);
       setInvestmentError(null);
     } catch (err) {
-      console.error('Error loading user credits:', err);
-      setInvestmentError('Failed to load your available credits. Please try again.');
+      console.error("Error loading user credits:", err);
+      setInvestmentError(
+        "Failed to load your available credits. Please try again."
+      );
     }
   };
 
@@ -112,6 +186,144 @@ export default function GroupPage() {
       );
     } finally {
       setIsInvesting(false);
+    }
+  };
+
+  // Handle company selection for voting
+  const handleCompanySelect = (companyId) => {
+    // If already selected, remove it
+    if (selectedCompanies.includes(companyId)) {
+      setSelectedCompanies(selectedCompanies.filter((id) => id !== companyId));
+    } else {
+      // If max votes reached, show error
+      if (
+        votingStatus &&
+        selectedCompanies.length >= votingStatus.max_votes_per_user
+      ) {
+        alert(
+          `You can only select up to ${votingStatus.max_votes_per_user} companies`
+        );
+        return;
+      }
+      // Add to selected
+      setSelectedCompanies([...selectedCompanies, companyId]);
+    }
+  };
+
+  // Handle vote button click - simplified logic
+  const handleVoteClick = (companyId) => {
+    // Log the voting status to debug
+    console.log("Current voting status:", votingStatus);
+    console.log("Clicking vote for company:", companyId);
+
+    // Just toggle company selection for now, we'll validate in the submission phase
+    handleCompanySelect(companyId);
+  };
+
+  // Open vote submission modal with validation
+  const handleVoteSubmitClick = () => {
+    console.log(
+      "Attempting to submit votes. Selected companies:",
+      selectedCompanies
+    );
+    console.log("Voting status:", votingStatus);
+
+    // Fallback minimum if votingStatus isn't available
+    const minVotes = votingStatus?.min_votes_per_user || 1;
+
+    // Check minimum selections
+    if (selectedCompanies.length < minVotes) {
+      alert(`You must select at least ${minVotes} companies`);
+      return;
+    }
+
+    // If no active investments but we have voting status
+    if (
+      votingStatus &&
+      (!votingStatus.active_investments ||
+        votingStatus.active_investments.length === 0)
+    ) {
+      alert("You need to invest in this index before voting");
+      return;
+    }
+
+    // Open the modal
+    setShowVoteModal(true);
+    setVoteError(null);
+  };
+
+  // Close vote modal
+  const handleCloseVoteModal = () => {
+    setShowVoteModal(false);
+    setVoteError(null);
+  };
+
+  // Submit votes with better error handling
+  const handleSubmitVotes = async () => {
+    if (!activeInvestment) {
+      setVoteError("No active investment selected");
+      return;
+    }
+
+    setIsVoting(true);
+    setVoteError(null);
+
+    try {
+      console.log("Submitting votes:", {
+        indexId: Number(groupId),
+        companyIds: selectedCompanies,
+        investmentId: activeInvestment.id,
+      });
+
+      const result = await votingService.submitVotes(
+        Number(groupId),
+        selectedCompanies,
+        activeInvestment.id
+      );
+
+      console.log("Vote submission result:", result);
+      setVoteSuccess(true);
+
+      // Refresh vote weights
+      const weights = await indexesService.getCompanyVoteWeights(
+        Number(groupId)
+      );
+      setVoteWeights(weights);
+
+      // Update voting status
+      const status = await votingService.getIndexVotingStatus(Number(groupId));
+      setVotingStatus(status);
+
+      // Close modal after 2 seconds
+      setTimeout(() => {
+        setShowVoteModal(false);
+        setVoteSuccess(false);
+        setSelectedCompanies([]);
+      }, 2000);
+    } catch (err) {
+      console.error("Error submitting votes:", err);
+
+      // Extract the most specific error message available
+      let errorMessage = "Failed to submit votes. Please try again.";
+      if (err.response?.data) {
+        if (typeof err.response.data === "string") {
+          errorMessage = err.response.data;
+        } else if (err.response.data.detail) {
+          errorMessage = err.response.data.detail;
+        } else if (err.response.data.error) {
+          errorMessage = err.response.data.error;
+        } else if (err.response.data.company_ids) {
+          errorMessage = err.response.data.company_ids;
+        } else if (err.response.data.index_id) {
+          errorMessage = err.response.data.index_id;
+        } else if (err.response.data.investment_id) {
+          errorMessage = err.response.data.investment_id;
+        }
+      }
+
+      setVoteError(errorMessage);
+    } finally {
+      setIsVoting(false);
     }
   };
 
@@ -320,15 +532,115 @@ export default function GroupPage() {
           </div>
         )}
 
+        {/* Vote Weights section - only show if in voting stage or later and weights exist */}
+        {(indexData?.status === "voting" ||
+          indexData?.status === "executed" ||
+          indexData?.status === "archived") && (
+          <div className="mb-8">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              Vote Weights
+            </h2>
+            <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-900">
+                    <tr>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                      >
+                        Company
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                      >
+                        Symbol
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                      >
+                        Sector
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                      >
+                        Vote Count
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                      >
+                        Weight
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {voteWeights.map((item, idx) => (
+                      <tr
+                        key={item.company_id}
+                        className={
+                          idx % 2 === 0
+                            ? "bg-white dark:bg-gray-800"
+                            : "bg-gray-50 dark:bg-gray-900"
+                        }
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                          {item.company_name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {item.company_symbol}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {item.sector}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
+                          {item.vote_count}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-600 dark:text-primary-400 text-right">
+                          {parseFloat(item.total_weight).toLocaleString(
+                            undefined,
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {loadingVoteWeights && (
+                <div className="py-4 text-center text-gray-500 dark:text-gray-400">
+                  Loading vote weights...
+                </div>
+              )}
+              {!loadingVoteWeights && voteWeights.length === 0 && (
+                <div className="py-4 text-center text-gray-500 dark:text-gray-400">
+                  No vote data available yet.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
           Companies
         </h2>
+
         {indexData.companies && indexData.companies.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {indexData.companies.map((company) => (
               <div
                 key={company.id}
-                className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-6 hover:shadow-lg transition-all duration-300 flex flex-col h-full"
+                className={`bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-6 hover:shadow-lg transition-all duration-300 flex flex-col h-full ${
+                  selectedCompanies.includes(company.id)
+                    ? "ring-2 ring-primary-500"
+                    : ""
+                }`}
               >
                 <div className="flex items-start justify-between mb-6">
                   <div>
@@ -361,12 +673,32 @@ export default function GroupPage() {
                       Market Cap: ${(company.market_cap / 1000000).toFixed(1)}M
                     </p>
                   </div>
-                  <button
-                    className="ml-4 px-4 py-1.5 border border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white rounded-lg transition-colors text-sm font-medium"
-                    onClick={() => {}}
-                  >
-                    Vote
-                  </button>
+                  {/* Vote button - always enabled during voting phase */}
+                  {indexData.status === "voting" ? (
+                    <button
+                      className={`ml-4 px-4 py-1.5 border rounded-lg transition-colors text-sm font-medium
+                        ${
+                          selectedCompanies.includes(company.id)
+                            ? "bg-primary-600 text-white border-primary-600"
+                            : "border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white"
+                        }
+                      `}
+                      onClick={() => handleVoteClick(company.id)}
+                    >
+                      {selectedCompanies.includes(company.id)
+                        ? "Selected"
+                        : "Vote"}
+                    </button>
+                  ) : (
+                    <button
+                      className="ml-4 px-4 py-1.5 border border-gray-300 text-gray-400 rounded-lg cursor-not-allowed text-sm font-medium"
+                      disabled
+                    >
+                      {indexData.status === "draft"
+                        ? "Not Votable"
+                        : "Voting Closed"}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -376,6 +708,191 @@ export default function GroupPage() {
             <p className="text-gray-600 dark:text-gray-300 text-center">
               No companies found in this investment group.
             </p>
+          </div>
+        )}
+
+        {/* Add a floating vote button if companies are selected - simplified condition */}
+        {indexData.status === "voting" && selectedCompanies.length > 0 && (
+          <div className="fixed bottom-8 right-8 z-30">
+            <button
+              className="px-6 py-3 bg-primary-600 text-white rounded-lg shadow-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center gap-2"
+              onClick={handleVoteSubmitClick}
+            >
+              <span>Submit Votes ({selectedCompanies.length})</span>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M5 13l4 4L19 7"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Vote Submission Modal */}
+        {showVoteModal && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 relative">
+              <button
+                onClick={handleCloseVoteModal}
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  ></path>
+                </svg>
+              </button>
+
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                Confirm Your Votes
+              </h3>
+
+              {voteSuccess ? (
+                <div className="text-center py-4">
+                  <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <svg
+                      className="w-10 h-10 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M5 13l4 4L19 7"
+                      ></path>
+                    </svg>
+                  </div>
+                  <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    Votes Submitted!
+                  </p>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    Your votes have been recorded successfully.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-gray-600 dark:text-gray-300 mb-6">
+                    You're about to vote for {selectedCompanies.length}{" "}
+                    companies in this index. These votes will determine the
+                    composition of the index.
+                  </p>
+
+                  <div className="mb-6">
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Selected Companies
+                    </h4>
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 max-h-40 overflow-y-auto">
+                      <ul className="space-y-1">
+                        {selectedCompanies.map((companyId) => {
+                          const company = indexData.companies.find(
+                            (c) => c.id === companyId
+                          );
+                          return (
+                            <li
+                              key={companyId}
+                              className="text-sm text-gray-700 dark:text-gray-300 flex items-center"
+                            >
+                              <svg
+                                className="w-4 h-4 mr-2 text-primary-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M5 13l4 4L19 7"
+                                ></path>
+                              </svg>
+                              {company ? company.name : `Company ${companyId}`}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {votingStatus.active_investments.length > 0 && (
+                    <div className="mb-6">
+                      <label
+                        htmlFor="investmentSelect"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                      >
+                        Investment to Use
+                      </label>
+                      <select
+                        id="investmentSelect"
+                        className="focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        value={activeInvestment?.id || ""}
+                        onChange={(e) => {
+                          const selectedId = Number(e.target.value);
+                          const investment =
+                            votingStatus.active_investments.find(
+                              (inv) => inv.id === selectedId
+                            );
+                          setActiveInvestment(investment);
+                        }}
+                      >
+                        {votingStatus.active_investments.map((inv) => (
+                          <option key={inv.id} value={inv.id}>
+                            ${inv.amount.toLocaleString()} -{" "}
+                            {new Date(inv.date).toLocaleDateString()}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {voteError && (
+                    <div className="mb-4 p-3 rounded bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm">
+                      {voteError}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end space-x-3">
+                    <button
+                      onClick={handleCloseVoteModal}
+                      className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSubmitVotes}
+                      disabled={isVoting}
+                      className={`px-4 py-2 rounded-md shadow-sm text-sm font-medium text-white 
+                        ${
+                          isVoting
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-primary-600 hover:bg-primary-700"
+                        }`}
+                    >
+                      {isVoting ? "Processing..." : "Submit Votes"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -474,6 +991,11 @@ export default function GroupPage() {
           </div>
         </div>
       )}
+
+      {/* Add a small debug indicator at the bottom of the page */}
+      <div className="fixed bottom-0 left-0 p-2 bg-gray-100 dark:bg-gray-900 text-xs text-gray-500 dark:text-gray-400">
+        {debugMessage}
+      </div>
     </section>
   );
 }

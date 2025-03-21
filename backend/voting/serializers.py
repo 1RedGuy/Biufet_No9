@@ -1,158 +1,134 @@
 from rest_framework import serializers
-from django.utils import timezone
-from django.db import transaction
-from django.db.models import Count
-from .models import VotingSession, Vote, VotingResult
-from companies.models import Company
+from .models import Vote, CompanyVoteCount
+from companies.serializers import CompanySerializer
 from indexes.models import Index
-from investments.models import Investment
-
-class VotingSessionSerializer(serializers.ModelSerializer):
-    """Serializer for voting sessions"""
-    total_votes = serializers.IntegerField(read_only=True)
-    unique_voters = serializers.IntegerField(read_only=True)
-    remaining_time = serializers.SerializerMethodField()
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
-    
-    class Meta:
-        model = VotingSession
-        fields = [
-            'id', 'index', 'status', 'status_display', 'start_date', 'end_date',
-            'min_votes_required', 'max_votes_allowed', 'min_investors',
-            'total_votes', 'unique_voters', 'remaining_time',
-            'created_at', 'updated_at'
-        ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
-    
-    def get_remaining_time(self, obj):
-        """Calculate remaining time in seconds if session is active"""
-        if obj.status != 'active':
-            return None
-        
-        now = timezone.now()
-        if now > obj.end_date:
-            return 0
-        
-        remaining = obj.end_date - now
-        return int(remaining.total_seconds())
-    
-    def validate(self, data):
-        """Validate voting session data"""
-        if data.get('start_date') and data.get('end_date'):
-            if data['start_date'] >= data['end_date']:
-                raise serializers.ValidationError("End date must be after start date")
-        
-        if data.get('min_votes_required') and data.get('max_votes_allowed'):
-            if data['min_votes_required'] > data['max_votes_allowed']:
-                raise serializers.ValidationError("Minimum votes cannot be greater than maximum votes")
-        
-        return data
+from django.db import transaction
+from decimal import Decimal
+from companies.models import Company
 
 
 class VoteSerializer(serializers.ModelSerializer):
-    """Serializer for individual votes"""
-    user_username = serializers.CharField(source='user.username', read_only=True)
-    company_name = serializers.CharField(source='company.name', read_only=True)
-    company_symbol = serializers.CharField(source='company.symbol', read_only=True)
-    
     class Meta:
         model = Vote
-        fields = [
-            'id', 'session', 'user', 'user_username', 
-            'company', 'company_name', 'company_symbol',
-            'investment', 'created_at'
-        ]
-        read_only_fields = ['id', 'created_at', 'user_username', 'company_name', 'company_symbol']
-    
-    def validate(self, data):
-        """Validate vote data"""
-        user = self.context['request'].user
-        session = data['session']
-        company = data['company']
-        
-        # Make sure user has an active investment in the index
-        investment = Investment.objects.filter(
-            user=user,
-            index=session.index,
-            status='ACTIVE'
-        ).first()
-        
-        if not investment:
-            raise serializers.ValidationError("You must have an active investment in this index to vote.")
-        
-        # Add the investment to the data
-        data['investment'] = investment
-        data['user'] = user
-        
-        # Check if session is active
-        if not session.is_active:
-            raise serializers.ValidationError("Voting session is not active.")
-        
-        # Check if company is in the index's companies
-        if not session.index.companies.filter(id=company.id).exists():
-            raise serializers.ValidationError("This company is not part of the index.")
-        
-        # Check if user has reached maximum votes
-        user_votes_count = Vote.objects.filter(
-            session=session,
-            user=user
-        ).count()
-        
-        if user_votes_count >= session.max_votes_allowed:
-            raise serializers.ValidationError(
-                f"You have reached the maximum allowed votes ({session.max_votes_allowed})."
-            )
-        
-        # Check if user has already voted for this company
-        if Vote.objects.filter(session=session, user=user, company=company).exists():
-            raise serializers.ValidationError("You have already voted for this company.")
-        
-        return data
+        fields = ['id', 'user', 'index', 'company', 'investment', 'weight', 'created_at']
+        read_only_fields = ['id', 'user', 'weight', 'created_at']
 
 
-class VotingResultSerializer(serializers.ModelSerializer):
-    """Serializer for voting results"""
-    company_name = serializers.CharField(source='company.name', read_only=True)
-    company_symbol = serializers.CharField(source='company.symbol', read_only=True)
-    company_sector = serializers.CharField(source='company.sector', read_only=True)
-    company_price = serializers.DecimalField(
-        source='company.current_price', 
-        max_digits=10, 
-        decimal_places=2,
-        read_only=True
-    )
+class CompanyVoteCountSerializer(serializers.ModelSerializer):
+    company = CompanySerializer(read_only=True)
     
     class Meta:
-        model = VotingResult
-        fields = [
-            'id', 'session', 'company', 'company_name', 'company_symbol',
-            'company_sector', 'company_price', 'vote_count', 'percentage',
-            'rank', 'calculated_at'
-        ]
-        read_only_fields = ['id', 'calculated_at']
+        model = CompanyVoteCount
+        fields = ['company', 'total_weight', 'vote_count']
+        read_only_fields = ['total_weight', 'vote_count']
 
 
-class VoteCountSerializer(serializers.Serializer):
-    """Serializer for vote counts by company"""
-    company_id = serializers.IntegerField()
-    company_name = serializers.CharField()
-    company_symbol = serializers.CharField()
-    vote_count = serializers.IntegerField()
+class CreateVoteSerializer(serializers.Serializer):
+    index_id = serializers.IntegerField()
+    company_ids = serializers.ListField(child=serializers.IntegerField(), min_length=1)
+    investment_id = serializers.IntegerField()
+
+    def validate(self, data):
+        # Check if the index exists
+        try:
+            index = Index.objects.get(pk=data['index_id'])
+        except Index.DoesNotExist:
+            raise serializers.ValidationError({"index_id": "Index does not exist"})
+        
+        # Check if the index is in voting status
+        if index.status != 'voting':
+            raise serializers.ValidationError({
+                "index_id": f"Voting is not allowed for this index. Current status: {index.status}"
+            })
+        
+        # Check if the number of company votes is within the allowed range
+        company_count = len(data['company_ids'])
+        if company_count < index.min_votes_per_user:
+            raise serializers.ValidationError({
+                "company_ids": f"You must vote for at least {index.min_votes_per_user} companies"
+            })
+        if company_count > index.max_votes_per_user:
+            raise serializers.ValidationError({
+                "company_ids": f"You can vote for at most {index.max_votes_per_user} companies"
+            })
+        
+        # Check if all companies are part of the index
+        index_company_ids = set(index.companies.values_list('id', flat=True))
+        for company_id in data['company_ids']:
+            if company_id not in index_company_ids:
+                raise serializers.ValidationError({
+                    "company_ids": f"Company with ID {company_id} is not part of this index"
+                })
+        
+        # Check if the investment exists and belongs to the user
+        user = self.context['request'].user
+        try:
+            investment = user.investments.get(pk=data['investment_id'])
+        except Exception:
+            raise serializers.ValidationError({
+                "investment_id": "Investment does not exist or doesn't belong to you"
+            })
+        
+        # Check if the investment is for the correct index
+        if investment.index.id != index.id:
+            raise serializers.ValidationError({
+                "investment_id": "Investment is not for this index"
+            })
+        
+        # Check if the investment is active
+        if investment.status != 'ACTIVE':
+            raise serializers.ValidationError({
+                "investment_id": f"Investment is not active. Current status: {investment.status}"
+            })
+        
+        # Check if the investment has already been used for voting
+        if investment.has_voted:
+            raise serializers.ValidationError({
+                "investment_id": "This investment has already been used for voting"
+            })
+        
+        # Store the index and investment for create method
+        self.index = index
+        self.investment = investment
+        
+        return data
     
-    def to_representation(self, instance):
-        """Custom representation to handle the aggregated data"""
-        company = Company.objects.get(id=instance['company'])
-        return {
-            'company_id': company.id,
-            'company_name': company.name,
-            'company_symbol': company.symbol,
-            'vote_count': instance['vote_count']
-        }
-
-
-class UserVoteSummarySerializer(serializers.Serializer):
-    """Serializer for user vote summary"""
-    session_id = serializers.IntegerField()
-    votes_cast = serializers.IntegerField()
-    votes_remaining = serializers.IntegerField()
-    companies_voted = serializers.ListField(child=serializers.IntegerField()) 
+    @transaction.atomic
+    def create(self, validated_data):
+        user = self.context['request'].user
+        index = self.index
+        investment = self.investment
+        company_ids = validated_data['company_ids']
+        
+        # Calculate vote weight per company
+        weight_per_company = investment.amount / Decimal(len(company_ids))
+        
+        # Delete any existing votes for this user and investment
+        Vote.objects.filter(user=user, investment=investment).delete()
+        
+        # Create new votes
+        votes = []
+        for company_id in company_ids:
+            vote = Vote(
+                user=user,
+                index=index,
+                company_id=company_id,
+                investment=investment,
+                weight=weight_per_company
+            )
+            votes.append(vote)
+        
+        # Bulk create votes
+        created_votes = Vote.objects.bulk_create(votes)
+        
+        # Update vote counts for all companies
+        for company_id in company_ids:
+            company = Company.objects.get(pk=company_id)
+            CompanyVoteCount.update_vote_count(index, company)
+        
+        # Mark investment as voted using the new has_voted flag
+        # Keep status as ACTIVE so it still counts in portfolio calculations
+        investment.has_voted = True
+        investment.save()
+        
+        return created_votes 
