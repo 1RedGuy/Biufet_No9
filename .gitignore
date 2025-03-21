@@ -277,3 +277,4 @@ dist
 .pnp.*
 
 .DS_Store
+companies.json

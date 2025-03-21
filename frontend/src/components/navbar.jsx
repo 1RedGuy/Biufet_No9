@@ -22,7 +22,7 @@ export default function Navbar() {
                     <div className="flex justify-between items-center">
                         <Link href="/" className="flex items-center">
                             <span className="text-3xl font-semibold text-gray-900 dark:text-white">
-                                Biufet
+                                Comdex
                             </span>
                         </Link>
                         
