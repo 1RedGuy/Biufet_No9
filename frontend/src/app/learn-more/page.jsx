@@ -84,7 +84,7 @@ export default function LearnMore() {
                 <div className="flex items-center justify-center h-16 w-16 rounded-full bg-primary-600 text-white text-2xl font-bold mb-4">1</div>
                 <h3 className="text-xl font-medium text-gray-900 dark:text-white">Deposit Funds</h3>
                 <p className="mt-2 text-base text-gray-600 dark:text-gray-300">
-                  Start by depositing money into your account. These funds become available for investment in any active company group.
+                  Start by depositing money into your account. These funds become available for investment in any active index.
                 </p>
               </div>
 
@@ -109,88 +109,48 @@ export default function LearnMore() {
       </section>
 
       {/* Index Status Explanation */}
-      <section className="py-16 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+      <section className="py-12 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Understanding Index Statuses</h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300">
-              Track your investment journey through these different stages, each representing a crucial phase in the index lifecycle.
-            </p>
-          </div>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white text-center mb-12">Understanding Index Statuses</h2>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 max-w-7xl mx-auto">
-            <div className="bg-white dark:bg-gray-700 rounded-xl shadow-lg p-4 transform transition-all duration-300 hover:scale-105 hover:shadow-xl border border-gray-100 dark:border-gray-600 flex flex-col h-[220px]">
-              <div className="flex items-center justify-between mb-4">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-100">
-                  Draft
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="bg-white dark:bg-gray-700 rounded-lg shadow p-6">
+              <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-100 mb-4">
+                Draft
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Planning Phase</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                Newly created index where users can invest but need to be alerted that it is newly created.
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Planning Phase</h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                Indexes in the draft stage are being prepared but are not yet open for voting or investments.
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-700 rounded-xl shadow-lg p-4 transform transition-all duration-300 hover:scale-105 hover:shadow-xl border border-gray-100 dark:border-gray-600 flex flex-col h-[220px]">
-              <div className="flex items-center justify-between mb-4">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">
-                  Voting
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+            <div className="bg-white dark:bg-gray-700 rounded-lg shadow p-6">
+              <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100 mb-4">
+                Voting
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Community Selection</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                The investment period has ended and users can select their final company allocations for receiving the final price.
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Community Selection</h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                During this phase, community members can vote for companies they want included in the final index.
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-700 rounded-xl shadow-lg p-4 transform transition-all duration-300 hover:scale-105 hover:shadow-xl border border-gray-100 dark:border-gray-600 flex flex-col h-[220px]">
-              <div className="flex items-center justify-between mb-4">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
-                  Active
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
+            <div className="bg-white dark:bg-gray-700 rounded-lg shadow p-6">
+              <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100 mb-4">
+                Active
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Investment Open</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Investment Open</h3>
+              <p className="text-gray-600 dark:text-gray-300">
                 Active indexes have completed the voting process and are open for investment. Funds are distributed across selected companies.
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-700 rounded-xl shadow-lg p-4 transform transition-all duration-300 hover:scale-105 hover:shadow-xl border border-gray-100 dark:border-gray-600 flex flex-col h-[220px]">
-              <div className="flex items-center justify-between mb-4">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">
-                  Archived
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                </svg>
+            <div className="bg-white dark:bg-gray-700 rounded-lg shadow p-6">
+              <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100 mb-4">
+                Archived
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Completed</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                The index has completed its lifecycle and is no longer accepting new investments or changes, though existing investments continue.
-              </p>
-            </div>
-
-            <div className="bg-white dark:bg-gray-700 rounded-xl shadow-lg p-4 transform transition-all duration-300 hover:scale-105 hover:shadow-xl border border-gray-100 dark:border-gray-600 flex flex-col h-[220px]">
-              <div className="flex items-center justify-between mb-4">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100">
-                  Executed
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Investment Closed</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                All activities (voting, investing, final selections) are completed and final returns have been distributed to participants.
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Completed</h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                These indexes have completed their lifecycle and are no longer accepting new investments, though existing investments continue.
               </p>
             </div>
           </div>
@@ -256,12 +216,75 @@ export default function LearnMore() {
             <div className="bg-white/90 dark:bg-gray-700/90 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300">
               <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary-500 text-white mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-medium text-gray-900 dark:text-white">Learn & Grow</h3>
+              <p className="mt-2 text-base text-gray-600 dark:text-gray-300">
+                Expand your investment knowledge by participating in community discussions and observing how different investment strategies perform.
+              </p>
+            </div>
+
+            <div className="bg-white/90 dark:bg-gray-700/90 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary-500 text-white mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-medium text-gray-900 dark:text-white">Virtual Currency</h3>
+              <h3 className="text-xl font-medium text-gray-900 dark:text-white">Flexible Investments</h3>
               <p className="mt-2 text-base text-gray-600 dark:text-gray-300">
-                Currently using virtual currency (not real money) for all investments and transactions on the platform.
+                Deposit and withdraw funds on your schedule, with no long-term lock-in periods required. Your money remains accessible.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-16 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white text-center mb-12">Frequently Asked Questions</h2>
+          
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">What is the minimum investment amount?</h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                You can start investing with any amount. There's no minimum requirement to participate in our indexes.
+              </p>
+            </div>
+
+            <div className="p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">How are companies selected for indexes?</h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                Companies are selected through community voting. Members vote for their preferred companies during the voting phase, and the top-voted companies are included in the final index.
+              </p>
+            </div>
+
+            <div className="p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">When can I withdraw my investment?</h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                You can withdraw your investment at any time from active indexes. The withdrawal will be processed based on the current value of your investment.
+              </p>
+            </div>
+
+            <div className="p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">How is my money distributed across companies?</h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                Your investment is distributed equally across all companies in the index. This ensures a balanced exposure to all selected companies.
+              </p>
+            </div>
+
+            <div className="p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Are there any fees?</h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                We maintain a transparent fee structure. Details about any applicable fees are clearly displayed before you make an investment.
+              </p>
+            </div>
+
+            <div className="p-6 bg-white dark:bg-gray-700 rounded-lg shadow">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">How secure is my investment?</h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                We implement industry-standard security measures to protect your account and investments. However, all investments carry inherent market risks.
               </p>
             </div>
           </div>
@@ -276,6 +299,12 @@ export default function LearnMore() {
             Join our community-driven investment platform today and start growing your portfolio with the power of collective wisdom.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/register"
+              className="rounded-full bg-primary-600 text-white hover:bg-primary-700 transition-all duration-200 font-semibold text-base px-8 py-4 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            >
+              Create Account
+            </Link>
             <Link
               href="/dashboard"
               className="rounded-full border-2 border-primary-600 text-primary-600 dark:text-primary-400 hover:bg-primary-600 hover:text-white dark:hover:bg-primary-600 dark:hover:text-white transition-all duration-200 font-semibold text-base px-8 py-4 flex items-center justify-center"
