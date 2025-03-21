@@ -184,6 +184,28 @@ const indexesService = {
       };
     }
   },
+
+  async activateIndex(id) {
+    try {
+      const api = createApiInstance();
+      const response = await api.post(`indexes/${id}/activate/`);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to activate index ${id}:`, error.message);
+      throw error;
+    }
+  },
+
+  async archiveIndex(id) {
+    try {
+      const api = createApiInstance();
+      const response = await api.post(`indexes/${id}/archive/`);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to archive index ${id}:`, error.message);
+      throw error;
+    }
+  },
 };
 
 export default indexesService;

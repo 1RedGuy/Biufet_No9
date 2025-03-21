@@ -5,12 +5,10 @@ from companies.models import Company
 
 class Index(models.Model):
     STATUS_CHOICES = [
-        ('draft', _('Draft')),
-        ('active', _('Active')),
-        ('voting', _('Voting Period')),
-        ('closed', _('Closed')),
-        ('executed', _('Executed')),
-        ('archived', _('Archived')),
+        ('draft', _('Draft')),           # Initial state
+        ('active', _('Active')),         # Ready for investments and voting
+        ('executed', _('Executed')),     # Voting completed and investments processed
+        ('archived', _('Archived')),     # No longer active
     ]
 
     name = models.CharField(max_length=255, verbose_name=_('Index Name'))

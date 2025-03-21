@@ -151,8 +151,7 @@ class IndexViewSet(viewsets.ModelViewSet):
         stats = {
             'total_indexes': indexes.count(),
             'active_indexes': indexes.filter(status='active').count(),
-            'voting_indexes': indexes.filter(status='voting').count(),
-            'completed_indexes': indexes.filter(status='completed').count(),
+            'draft_indexes': indexes.filter(status='draft').count(),
             'archived_indexes': indexes.filter(status='archived').count(),
         }
         
