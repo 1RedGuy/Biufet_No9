@@ -46,37 +46,49 @@ export default function Navbar() {
                         </Link>
                         
                         {/* Centered Navigation - Desktop */}
-                        <div className="hidden lg:flex items-center justify-center flex-1 gap-12">
-                            <Link 
-                                href="/" 
-                                className={`${
-                                    pathname === '/' 
-                                    ? 'text-primary-600 dark:text-white' 
-                                    : 'text-gray-700 dark:text-gray-300'
-                                } text-lg font-medium transition-colors hover:text-primary-600 dark:hover:text-white`}
-                            >
-                                Home
-                            </Link>
-                            <Link 
-                                href="/dashboard" 
-                                className={`${
-                                    pathname.startsWith('/dashboard')
-                                    ? 'text-primary-600 dark:text-white' 
-                                    : 'text-gray-700 dark:text-gray-300'
-                                } text-lg font-medium transition-colors hover:text-primary-600 dark:hover:text-white`}
-                            >
-                                Dashboard
-                            </Link>
-                            <Link 
-                                href="/contact" 
-                                className={`${
-                                    pathname === '/contact' 
-                                    ? 'text-primary-600 dark:text-white' 
-                                    : 'text-gray-700 dark:text-gray-300'
-                                } text-lg font-medium transition-colors hover:text-primary-600 dark:hover:text-white`}
-                            >
-                                Contact Us
-                            </Link>
+                        <div className="hidden lg:flex items-center justify-center flex-1 gap-8">
+                            <div className="flex items-center justify-center gap-8">
+                                <Link 
+                                    href="/" 
+                                    className={`${
+                                        pathname === '/' 
+                                        ? 'text-primary-600 dark:text-white' 
+                                        : 'text-gray-700 dark:text-gray-300'
+                                    } text-lg font-medium transition-colors hover:text-primary-600 dark:hover:text-white`}
+                                >
+                                    Home
+                                </Link>
+                                <Link 
+                                    href="/dashboard" 
+                                    className={`${
+                                        pathname.startsWith('/dashboard')
+                                        ? 'text-primary-600 dark:text-white' 
+                                        : 'text-gray-700 dark:text-gray-300'
+                                    } text-lg font-medium transition-colors hover:text-primary-600 dark:hover:text-white`}
+                                >
+                                    Dashboard
+                                </Link>
+                                <Link 
+                                    href="/contact" 
+                                    className={`${
+                                        pathname === '/contact' 
+                                        ? 'text-primary-600 dark:text-white' 
+                                        : 'text-gray-700 dark:text-gray-300'
+                                    } text-lg font-medium transition-colors hover:text-primary-600 dark:hover:text-white`}
+                                >
+                                    Contact Us
+                                </Link>
+                                <Link 
+                                    href="/learn-more" 
+                                    className={`${
+                                        pathname === '/learn-more' 
+                                        ? 'text-primary-600 dark:text-white' 
+                                        : 'text-gray-700 dark:text-gray-300'
+                                    } text-lg font-medium transition-colors hover:text-primary-600 dark:hover:text-white`}
+                                >
+                                    Learn More
+                                </Link>
+                            </div>
                         </div>
 
                         <div className="flex items-center gap-4">
@@ -154,6 +166,16 @@ export default function Navbar() {
                                     } text-lg font-medium transition-colors py-2 px-4 rounded-md hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-white`}
                                 >
                                     Contact Us
+                                </Link>
+                                <Link 
+                                    href="/learn-more" 
+                                    className={`${
+                                        pathname === '/learn-more' 
+                                        ? 'text-primary-600 dark:text-white bg-gray-100 dark:bg-gray-700' 
+                                        : 'text-gray-700 dark:text-gray-300'
+                                    } text-lg font-medium transition-colors py-2 px-4 rounded-md hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-white`}
+                                >
+                                    Learn More
                                 </Link>
                             </div>
                         </div>

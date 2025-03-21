@@ -264,6 +264,18 @@ export default function LearnMore() {
                 Currently using virtual currency (not real money) for all investments and transactions on the platform.
               </p>
             </div>
+
+            <div className="bg-white/90 dark:bg-gray-700/90 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary-500 text-white mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6M13 7V5a2 2 0 012-2h3a2 2 0 012 2v2M13 7H5a2 2 0 00-2 2v11a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-8z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-medium text-gray-900 dark:text-white">Low Risk High Reward</h3>
+              <p className="mt-2 text-base text-gray-600 dark:text-gray-300">
+                Our platform's unique approach combines risk mitigation through diversification while maximizing potential returns through community-driven investment strategies.
+              </p>
+            </div>
           </div>
         </div>
       </section>
