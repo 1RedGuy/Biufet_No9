@@ -229,7 +229,8 @@ class UserProfileView(APIView):
             'investment_sectors': investment_sectors,
             'monthly_performance': monthly_data,
             'investment_by_index': investment_by_index,
-            'active_investments': active_investments
+            'active_investments': active_investments,
+            'credits': float(user.credits)
         }
 
         return Response(user_data)

@@ -7,10 +7,11 @@ import indexesService from "@/network/indexes";
 export default function Dashboard() {
   const [indexes, setIndexes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [activeFilter, setActiveFilter] = useState("all");
   const [stats, setStats] = useState({
     total_indexes: 0,
     active_indexes: 0,
+    voting_indexes: 0,
     average_companies_per_index: 0,
   });
 
@@ -19,7 +20,8 @@ export default function Dashboard() {
       try {
         console.log("Dashboard: Starting data fetch");
 
-        const statusParam = activeFilter !== 'all' ? { status: activeFilter } : {};
+        const statusParam =
+          activeFilter !== "all" ? { status: activeFilter } : {};
 
         const [indexesResponse, statsResponse] = await Promise.all([
           indexesService.getIndexes(statusParam),
@@ -36,9 +38,12 @@ export default function Dashboard() {
           name: index.name,
           description: index.description,
           companyCount: index.company_count || 0,
+          status: index.status,
           totalInvestment: index.total_investment
-            ? `$${(index.total_investment / 1000000).toFixed(1)}M`
-            : "$0M",
+            ? index.total_investment >= 1000000
+              ? `$${(index.total_investment / 1000000).toFixed(1)}M`
+              : `$${index.total_investment.toLocaleString()}`
+            : "$0",
           path: `/dashboard/${index.id}`,
         }));
 
@@ -100,41 +105,51 @@ export default function Dashboard() {
 
           <div className="flex justify-center gap-2 mb-8">
             <button
-              onClick={() => setActiveFilter('all')}
+              onClick={() => setActiveFilter("all")}
               className={`px-4 py-2 rounded-lg transition-colors ${
-                activeFilter === 'all'
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                activeFilter === "all"
+                  ? "bg-primary-600 text-white"
+                  : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
               }`}
             >
               All Groups
             </button>
             <button
-              onClick={() => setActiveFilter('active')}
+              onClick={() => setActiveFilter("active")}
               className={`px-4 py-2 rounded-lg transition-colors ${
-                activeFilter === 'active'
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                activeFilter === "active"
+                  ? "bg-primary-600 text-white"
+                  : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
               }`}
             >
               Active
             </button>
             <button
-              onClick={() => setActiveFilter('draft')}
+              onClick={() => setActiveFilter("voting")}
               className={`px-4 py-2 rounded-lg transition-colors ${
-                activeFilter === 'draft'
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                activeFilter === "voting"
+                  ? "bg-primary-600 text-white"
+                  : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+              }`}
+            >
+              Voting
+            </button>
+            <button
+              onClick={() => setActiveFilter("draft")}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                activeFilter === "draft"
+                  ? "bg-primary-600 text-white"
+                  : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
               }`}
             >
               Draft
             </button>
             <button
-              onClick={() => setActiveFilter('archived')}
+              onClick={() => setActiveFilter("archived")}
               className={`px-4 py-2 rounded-lg transition-colors ${
-                activeFilter === 'archived'
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                activeFilter === "archived"
+                  ? "bg-primary-600 text-white"
+                  : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
               }`}
             >
               Archived
@@ -210,6 +225,24 @@ export default function Dashboard() {
                   <p className="text-gray-500 dark:text-gray-400">
                     {index.description}
                   </p>
+                  {index.status && (
+                    <div className="mt-2">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          index.status === "active"
+                            ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
+                            : index.status === "voting"
+                            ? "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
+                            : index.status === "executed"
+                            ? "bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100"
+                            : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
+                        }`}
+                      >
+                        {index.status.charAt(0).toUpperCase() +
+                          index.status.slice(1)}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="mt-4 flex items-center justify-between text-gray-600 dark:text-gray-300 text-sm font-medium">
                   <span className="text-xl">
