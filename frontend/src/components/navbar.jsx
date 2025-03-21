@@ -8,9 +8,10 @@ export default function Navbar() {
     const pathname = usePathname();
     const router = useRouter();
 
-    // Check if we're in the auth route group by checking the first segment
-    const segments = pathname?.split('/').filter(Boolean);
-    const isAuthPage = segments?.[0] === '(auth)';
+    // Check if we're on an auth page
+    const isAuthPage = pathname?.startsWith('/login') || 
+                      pathname?.startsWith('/register') || 
+                      pathname?.startsWith('/forgot-password');
     
     if (isAuthPage) return null;
 

@@ -200,7 +200,7 @@ CORS_ALLOW_HEADERS = [
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': False,
+    'disable_existing_loggers': True,
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
@@ -208,18 +208,23 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': 'DEBUG',
+        'level': 'INFO',
     },
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': True,
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.utils': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
         },
         'companies': {
             'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': True,
+            'level': 'INFO',
+            'propagate': False,
         },
     },
 }
