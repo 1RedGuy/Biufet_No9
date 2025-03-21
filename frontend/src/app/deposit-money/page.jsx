@@ -3,16 +3,34 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { depositMoney } from '@/network/deposit-money';
 
 export default function DepositMoney() {
     const router = useRouter();
     const [amount, setAmount] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [isInvalid, setIsInvalid] = useState(false);
+    const [error, setError] = useState('');
 
     const handleSubmit = async (e) => {
-        e.preventDefault(); // Prevent default form submission
-        return; // Do nothing when form is submitted
+        e.preventDefault();
+        
+        if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+            setError('Please enter a valid amount greater than 0');
+            return;
+        }
+
+        setIsLoading(true);
+        setError('');
+
+        try {
+            await depositMoney(parseFloat(amount));
+            router.push('/profile');
+        } catch (err) {
+            console.error('Error depositing money:', err);
+            setError(err.error || 'Failed to deposit money. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleAmountChange = (e) => {
@@ -29,8 +47,6 @@ export default function DepositMoney() {
             value = parts[0] + '.' + (parts[1] || '').slice(0, 2);
         }
 
-        const numValue = parseFloat(value);
-        setIsInvalid(!isNaN(numValue) && numValue < 100);
         setAmount(value);
     };
 
@@ -56,6 +72,12 @@ export default function DepositMoney() {
                         </Link>
                     </div>
 
+                    {error && (
+                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+                            <span className="block sm:inline">{error}</span>
+                        </div>
+                    )}
+
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
                             <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -69,21 +91,13 @@ export default function DepositMoney() {
                                     value={amount}
                                     onChange={handleAmountChange}
                                     onKeyDown={handleKeyDown}
-                                    className={`block w-full pl-8 px-4 py-3 rounded-lg border focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-lg font-medium ${
-                                        isInvalid 
-                                            ? 'border-red-500 dark:border-red-500' 
-                                            : 'border-gray-300 dark:border-gray-600'
-                                    }`}
+                                    className="block w-full pl-8 px-4 py-3 rounded-lg border focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-lg font-medium border-gray-300 dark:border-gray-600"
                                     placeholder="0.00"
                                     disabled={isLoading}
                                 />
                             </div>
-                            <p className={`mt-2 text-sm ${
-                                isInvalid 
-                                    ? 'text-red-600 dark:text-red-400 font-medium' 
-                                    : 'text-gray-500 dark:text-gray-400'
-                            }`}>
-                                Minimum deposit amount is $100
+                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                Enter the amount you wish to deposit
                             </p>
                         </div>
 
@@ -100,10 +114,10 @@ export default function DepositMoney() {
                         </div>
 
                         <button
-                            type="button"
-                            disabled={isLoading || isInvalid || !amount || parseFloat(amount) < 100}
+                            type="submit"
+                            disabled={isLoading || !amount || parseFloat(amount) <= 0}
                             className={`w-full px-6 py-3 text-white rounded-lg shadow-sm transition-colors duration-200 font-medium text-base sm:text-lg
-                                ${(isLoading || isInvalid || !amount || parseFloat(amount) < 100)
+                                ${(isLoading || !amount || parseFloat(amount) <= 0)
                                     ? 'bg-gray-400 cursor-not-allowed' 
                                     : 'bg-primary-600 hover:bg-primary-700'}`}
                         >

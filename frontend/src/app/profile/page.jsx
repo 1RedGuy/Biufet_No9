@@ -3,19 +3,20 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-} from "chart.js";
-import { Line, Doughnut } from "react-chartjs-2";
-import { fetchUserProfile } from "@/network/profile";
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+    ArcElement
+} from 'chart.js';
+import { Line, Doughnut } from 'react-chartjs-2';
+import { fetchUserProfile } from '@/network/profile';
+import { getUserCredits } from '@/network/deposit-money';
 
 ChartJS.register(
   CategoryScale,
@@ -30,25 +31,35 @@ ChartJS.register(
 );
 
 export default function YourProfile() {
-  const [userData, setUserData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+    const [userData, setUserData] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [userCredits, setUserCredits] = useState(0);
 
-  const fetchData = async () => {
-    try {
-      const profileData = await fetchUserProfile();
-      setUserData(profileData);
-      setIsLoading(false);
-    } catch (err) {
-      if (err.message === "No authentication token found") {
-        setError("Please log in to view your profile");
-      } else {
-        setError("Failed to load profile data");
-      }
-      setIsLoading(false);
-      console.error("Error loading profile:", err);
-    }
-  };
+    const fetchData = async () => {
+        try {
+            const profileData = await fetchUserProfile();
+            setUserData(profileData);
+            
+            // Fetch user credits
+            try {
+                const creditsData = await getUserCredits();
+                setUserCredits(creditsData.credits);
+            } catch (creditsErr) {
+                console.error('Error loading credits:', creditsErr);
+            }
+            
+            setIsLoading(false);
+        } catch (err) {
+            if (err.message === 'No authentication token found') {
+                setError('Please log in to view your profile');
+            } else {
+                setError('Failed to load profile data');
+            }
+            setIsLoading(false);
+            console.error('Error loading profile:', err);
+        }
+    };
 
   useEffect(() => {
     fetchData();
@@ -197,37 +208,39 @@ export default function YourProfile() {
     },
   };
 
-  return (
-    <section className="min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-900 dark:to-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-4 sm:p-6 mb-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex flex-col sm:flex-row items-center sm:space-x-4 text-center sm:text-left">
-              <div className="w-16 h-16 bg-primary-100 dark:bg-primary-800 rounded-full flex items-center justify-center mb-2 sm:mb-0">
-                <span className="text-2xl font-bold text-primary-600 dark:text-primary-200">
-                  {userData.first_name.charAt(0)}
-                </span>
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                  {`${userData.first_name} ${userData.last_name}`}
-                </h1>
-                <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">
-                  Member since{" "}
-                  {new Date(userData.date_joined).toLocaleDateString("en-US", {
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
-            </div>
-            <div>
-              <button className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg shadow-sm transition-colors duration-200 font-medium text-sm sm:text-base relative group">
-                <span>Withdraw</span>
-              </button>
-            </div>
-          </div>
-        </div>
+    return (
+        <section className="min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-900 dark:to-gray-900">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-4 sm:p-6 mb-8">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex flex-col sm:flex-row items-center sm:space-x-4 text-center sm:text-left">
+                            <div className="w-16 h-16 bg-primary-100 dark:bg-primary-800 rounded-full flex items-center justify-center mb-2 sm:mb-0">
+                                <span className="text-2xl font-bold text-primary-600 dark:text-primary-200">
+                                    {userData.first_name.charAt(0)}
+                                </span>
+                            </div>
+                            <div>
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                                    {`${userData.first_name} ${userData.last_name}`}
+                                </h1>
+                                <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">
+                                    Member since {new Date(userData.date_joined).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col items-end">
+                            <div className="mb-2 text-right">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">Available Credits</p>
+                                <p className="text-xl font-bold text-primary-600 dark:text-primary-400">{formatCurrency(userCredits)}</p>
+                            </div>
+                            <button
+                                className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg shadow-sm transition-colors duration-200 font-medium text-sm sm:text-base relative group"
+                            >
+                                <span>Withdraw</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
           <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-4 sm:p-6">
