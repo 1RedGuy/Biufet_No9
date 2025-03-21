@@ -163,7 +163,7 @@ export default function Register() {
                 </div>
                 <div className="ml-3 text-sm">
                   <label htmlFor="terms" className="font-light text-gray-500 dark:text-gray-300">
-                    I accept the <Link href="#" className="font-medium text-primary-600 hover:underline dark:text-primary-500">Terms and Conditions</Link>
+                    I accept the <Link href="/terms" className="font-medium text-primary-600 hover:underline dark:text-primary-500">Terms and Conditions</Link>
                   </label>
                 </div>
               </div>

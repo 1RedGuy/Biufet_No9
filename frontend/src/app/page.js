@@ -49,7 +49,7 @@ export default function HeroPage() {
           <div className="relative h-[400px] md:h-[500px] lg:h-[600px] flex items-center justify-center">
             <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 to-primary-500/5 dark:from-primary-500/20 dark:to-primary-500/10 rounded-3xl transform rotate-3"></div>
             <Image
-              src="/hero-image.svg"
+              src="/hero.svg"
               alt="Hero illustration"
               fill
               className="object-contain p-8 transform -rotate-3 hover:rotate-0 transition-transform duration-500"

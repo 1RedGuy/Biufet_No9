@@ -19,7 +19,6 @@ export default function GroupPage() {
         console.log(`Group page: Fetching data for index ID ${groupId}`);
         setLoading(true);
 
-        // Fetch index details and company stats in parallel
         const [indexDetails, indexCompaniesStats] = await Promise.all([
           indexesService.getIndexDetails(Number(groupId)),
           indexesService.getIndexCompaniesStats(Number(groupId)),
@@ -28,7 +27,6 @@ export default function GroupPage() {
         console.log("Group page: Received index details:", indexDetails);
         console.log("Group page: Received company stats:", indexCompaniesStats);
 
-        // Check if we got valid data back
         if (!indexDetails) {
           setError("Index not found or you do not have permission to view it");
           return;
@@ -50,13 +48,11 @@ export default function GroupPage() {
     }
   }, [groupId]);
 
-  // Handle back navigation
   const handleBack = () => {
     router.push("/dashboard");
   };
 
   if (loading) {
-    // Format values for display
     const totalInvestment = indexData?.total_investment
       ? `$${(indexData.total_investment / 1000000).toFixed(1)}M`
       : "$0M";
@@ -64,7 +60,6 @@ export default function GroupPage() {
     return (
       <section className="min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-900 dark:to-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Group Header */}
           <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-6 mb-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
@@ -84,6 +79,12 @@ export default function GroupPage() {
                     {totalInvestment}
                   </p>
                 </div>
+                <button
+                  className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium self-end"
+                  onClick={() => {}}
+                >
+                  Invest
+                </button>
               </div>
             </div>
           </div>
@@ -142,7 +143,6 @@ export default function GroupPage() {
     );
   }
 
-  // Format values for display
   const totalInvestment = indexData.total_investment
     ? `$${(indexData.total_investment / 1000000).toFixed(1)}M`
     : "$0M";
@@ -150,7 +150,6 @@ export default function GroupPage() {
   return (
     <section className="min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-900 dark:to-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Navigation */}
         <div className="mb-6">
           <button
             onClick={handleBack}
@@ -174,7 +173,6 @@ export default function GroupPage() {
           </button>
         </div>
 
-        {/* Group Header */}
         <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-6 mb-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
@@ -185,7 +183,7 @@ export default function GroupPage() {
                 {indexData.description}
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
               <div className="text-right">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Total Investment
@@ -194,11 +192,16 @@ export default function GroupPage() {
                   {totalInvestment}
                 </p>
               </div>
+              <button
+                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
+                onClick={() => {}}
+              >
+                Invest
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Stats Cards */}
         {companyStats && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
             <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-4">
@@ -228,7 +231,6 @@ export default function GroupPage() {
           </div>
         )}
 
-        {/* Companies Grid */}
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
           Companies
         </h2>
@@ -237,9 +239,9 @@ export default function GroupPage() {
             {indexData.companies.map((company) => (
               <div
                 key={company.id}
-                className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-6 hover:shadow-lg transition-all duration-300"
+                className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-6 hover:shadow-lg transition-all duration-300 flex flex-col h-full"
               >
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between mb-6">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                       {company.name}
@@ -261,8 +263,8 @@ export default function GroupPage() {
                     </span>
                   </div>
                 </div>
-                <div className="mt-4 flex justify-between items-end">
-                  <div>
+                <div className="mt-auto flex justify-between items-end">
+                  <div className="space-y-1">
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       Price: ${company.price?.toFixed(2) || "0.00"}
                     </p>
@@ -270,6 +272,12 @@ export default function GroupPage() {
                       Market Cap: ${(company.market_cap / 1000000).toFixed(1)}M
                     </p>
                   </div>
+                  <button
+                    className="ml-4 px-4 py-1.5 border border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white rounded-lg transition-colors text-sm font-medium"
+                    onClick={() => {}}
+                  >
+                    Vote
+                  </button>
                 </div>
               </div>
             ))}
