@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
     Chart as ChartJS,
@@ -15,6 +15,7 @@ import {
     ArcElement
 } from 'chart.js';
 import { Line, Doughnut } from 'react-chartjs-2';
+import { fetchUserProfile } from '@/network/profile';
 
 ChartJS.register(
     CategoryScale,
@@ -29,43 +30,104 @@ ChartJS.register(
 );
 
 export default function YourProfile() {
-    const [userData] = useState({
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        joinDate: 'January 2024',
-        totalInvestments: '$125,000',
-        portfolioGrowth: '+15.4%',
-        companiesInvested: 8
-    });
+    const [userData, setUserData] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    const [monthlyPerformance] = useState({
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    const fetchData = async () => {
+        try {
+            const profileData = await fetchUserProfile();
+            setUserData(profileData);
+            setIsLoading(false);
+        } catch (err) {
+            if (err.message === 'No authentication token found') {
+                setError('Please log in to view your profile');
+            } else {
+                setError('Failed to load profile data');
+            }
+            setIsLoading(false);
+            console.error('Error loading profile:', err);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(amount);
+    };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-xl">Loading...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-xl text-red-600">{error}</div>
+            </div>
+        );
+    }
+
+    const monthlyPerformance = {
+        labels: userData.monthly_performance.map(item => item.month),
         datasets: [
             {
                 label: 'Portfolio Value ($)',
-                data: [125000, 128000, 132000, 129000, 135000, 142000],
+                data: userData.monthly_performance.map(item => item.value),
                 borderColor: 'rgb(59, 130, 246)',
                 backgroundColor: 'rgba(59, 130, 246, 0.5)',
                 tension: 0.4
             }
         ]
-    });
+    };
 
-    const [sectorAllocation] = useState({
-        labels: ['Technology', 'Healthcare', 'Finance', 'Real Estate', 'Energy'],
+    const generateColors = (count) => {
+        const baseColors = [
+            'rgba(59, 130, 246, 0.8)',
+            'rgba(16, 185, 129, 0.8)', 
+            'rgba(245, 158, 11, 0.8)', 
+            'rgba(139, 92, 246, 0.8)', 
+            'rgba(236, 72, 153, 0.8)'  
+        ];
+
+        if (count <= baseColors.length) {
+            return baseColors.slice(0, count);
+        }
+
+        const colors = [...baseColors];
+        for (let i = baseColors.length; i < count; i++) {
+            const hue = (i * 137.508) % 360;
+            colors.push(`hsla(${hue}, 70%, 50%, 0.8)`);
+        }
+        return colors;
+    };
+
+    const sectorAllocation = {
+        labels: Object.keys(userData.investment_sectors).length > 0 
+            ? Object.keys(userData.investment_sectors)
+            : ['Test Investment'],
         datasets: [
             {
-                data: [40, 20, 15, 15, 10],
-                backgroundColor: [
-                    'rgba(59, 130, 246, 0.8)',
-                    'rgba(16, 185, 129, 0.8)',
-                    'rgba(245, 158, 11, 0.8)',
-                    'rgba(139, 92, 246, 0.8)',
-                    'rgba(236, 72, 153, 0.8)'
-                ]
+                data: Object.keys(userData.investment_sectors).length > 0
+                    ? Object.values(userData.investment_sectors)
+                    : [userData.total_investments],
+                backgroundColor: generateColors(
+                    Object.keys(userData.investment_sectors).length > 0
+                        ? Object.keys(userData.investment_sectors).length
+                        : 1
+                )
             }
         ]
-    });
+    };
 
     const lineOptions = {
         responsive: true,
@@ -133,33 +195,6 @@ export default function YourProfile() {
         }
     };
 
-    const [portfolioData] = useState([
-        {
-            id: 1,
-            company: 'TechCorp',
-            investmentAmount: '$25,000',
-            performance: '+12.5%',
-            status: 'Active',
-            date: '2024-01-15'
-        },
-        {
-            id: 2,
-            company: 'InnovateTech',
-            investmentAmount: '$30,000',
-            performance: '+8.3%',
-            status: 'Active',
-            date: '2024-02-01'
-        },
-        {
-            id: 3,
-            company: 'FutureTech',
-            investmentAmount: '$20,000',
-            performance: '+22.1%',
-            status: 'Active',
-            date: '2024-02-15'
-        }
-    ]);
-
     return (
         <section className="min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-900 dark:to-gray-900">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -168,35 +203,46 @@ export default function YourProfile() {
                         <div className="flex flex-col sm:flex-row items-center sm:space-x-4 text-center sm:text-left">
                             <div className="w-16 h-16 bg-primary-100 dark:bg-primary-800 rounded-full flex items-center justify-center mb-2 sm:mb-0">
                                 <span className="text-2xl font-bold text-primary-600 dark:text-primary-200">
-                                    {userData.name.charAt(0)}
+                                    {userData.first_name.charAt(0)}
                                 </span>
                             </div>
                             <div>
-                                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{userData.name}</h1>
-                                <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">Member since {userData.joinDate}</p>
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                                    {`${userData.first_name} ${userData.last_name}`}
+                                </h1>
+                                <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">
+                                    Member since {new Date(userData.date_joined).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                </p>
                             </div>
                         </div>
-                        <button
-                            className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg shadow-sm transition-colors duration-200 font-medium text-sm sm:text-base"
-                            onClick={() => {}}
-                        >
-                            Withdraw Funds
-                        </button>
+                        <div>
+                            <button
+                                className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg shadow-sm transition-colors duration-200 font-medium text-sm sm:text-base relative group"
+                            >
+                                <span>Withdraw</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
                     <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-4 sm:p-6">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">Total Investments</h3>
-                        <p className="text-2xl sm:text-3xl font-bold text-primary-600 dark:text-primary-400">{userData.totalInvestments}</p>
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">Total Current Value</h3>
+                        <p className="text-2xl sm:text-3xl font-bold text-primary-600 dark:text-primary-400">
+                            {formatCurrency(userData.total_investments)}
+                        </p>
                     </div>
                     <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-4 sm:p-6">
                         <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">Portfolio Growth</h3>
-                        <p className="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400">{userData.portfolioGrowth}</p>
+                        <p className="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400">
+                            {userData.portfolio_growth_percentage.toFixed(1)}%
+                        </p>
                     </div>
                     <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-4 sm:p-6">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">Indexes Invested</h3>
-                        <p className="text-2xl sm:text-3xl font-bold text-gray-700 dark:text-gray-300">{userData.companiesInvested}</p>
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">Initial Investment</h3>
+                        <p className="text-2xl sm:text-3xl font-bold text-gray-700 dark:text-gray-300">
+                            {formatCurrency(userData.active_investments.reduce((total, inv) => total + inv.amount, 0))}
+                        </p>
                     </div>
                 </div>
 
@@ -222,24 +268,28 @@ export default function YourProfile() {
                                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
                                     <thead className="bg-gray-50/50 dark:bg-gray-700/50">
                                         <tr>
-                                            <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Company</th>
+                                            <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Index</th>
                                             <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Investment</th>
+                                            <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Current Value</th>
                                             <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Performance</th>
                                             <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                                             <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-                                        {portfolioData.map((investment) => (
-                                            <tr key={investment.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/50">
+                                        {userData.active_investments.map((investment, index) => (
+                                            <tr key={index} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/50">
                                                 <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                                    {investment.company}
+                                                    {investment.index_name}
                                                 </td>
                                                 <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                    {investment.investmentAmount}
+                                                    {formatCurrency(investment.amount)}
+                                                </td>
+                                                <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                    {formatCurrency(investment.current_value)}
                                                 </td>
                                                 <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400 font-medium">
-                                                    {investment.performance}
+                                                    {investment.performance.toFixed(1)}%
                                                 </td>
                                                 <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                                                     <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100">
@@ -247,7 +297,7 @@ export default function YourProfile() {
                                                     </span>
                                                 </td>
                                                 <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                    {investment.date}
+                                                    {new Date(investment.date).toLocaleDateString()}
                                                 </td>
                                             </tr>
                                         ))}
@@ -260,7 +310,7 @@ export default function YourProfile() {
 
                 <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     <Link 
-                        href="/profile/change-password"
+                        href="/forgot-password"
                         className="flex items-center p-4 sm:p-6 bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md hover:bg-white/90 dark:hover:bg-gray-700/90 transition-colors"
                     >
                         <div>
@@ -269,12 +319,12 @@ export default function YourProfile() {
                         </div>
                     </Link>
                     <Link 
-                        href="/profile/payment-methods"
+                        href="/deposit-money"
                         className="flex items-center p-4 sm:p-6 bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md hover:bg-white/90 dark:hover:bg-gray-700/90 transition-colors"
                     >
                         <div>
-                            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Payment Methods</h3>
-                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Manage your payment options</p>
+                            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Deposit money</h3>
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Invest in an index right now</p>
                         </div>
                     </Link>
                     <Link 
