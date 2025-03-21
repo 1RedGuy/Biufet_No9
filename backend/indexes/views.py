@@ -1,22 +1,56 @@
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Count, Avg
+from django.db.models import Count, Avg, Q
 from .models import Index
 from .serializers import IndexSerializer
+from rest_framework.pagination import PageNumberPagination
 
-# Create your views here.
+class IndexPagination(PageNumberPagination):
+    page_size = 9  # Show 9 indexes per page (3x3 grid)
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 class IndexViewSet(viewsets.ModelViewSet):
-    queryset = Index.objects.all()
     serializer_class = IndexSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = IndexPagination
 
     def get_queryset(self):
         queryset = Index.objects.all()
-        status = self.request.query_params.get('status', None)
+        
+        # Filter by status
+        status = self.request.query_params.get('status', 'active')
         if status:
             queryset = queryset.filter(status=status)
+        
+        # Filter by search term
+        search = self.request.query_params.get('search', '')
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
+        
+        # Filter by min/max companies
+        min_companies = self.request.query_params.get('min_companies', None)
+        if min_companies:
+            queryset = queryset.annotate(
+                num_companies=Count('companies')
+            ).filter(num_companies__gte=min_companies)
+        
+        max_companies = self.request.query_params.get('max_companies', None)
+        if max_companies:
+            queryset = queryset.annotate(
+                num_companies=Count('companies')
+            ).filter(num_companies__lte=max_companies)
+        
+        # Order by
+        order_by = self.request.query_params.get('order_by', '-created_at')
+        valid_order_fields = ['created_at', '-created_at', 'name', '-name']
+        if order_by in valid_order_fields:
+            queryset = queryset.order_by(order_by)
+        
         return queryset
 
     @action(detail=True, methods=['post'])

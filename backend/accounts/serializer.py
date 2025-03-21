@@ -104,4 +104,24 @@ class PortfolioHistorySerializer(serializers.ModelSerializer):
         fields = ['value', 'profit_loss', 'timestamp']
         read_only_fields = fields
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    total_investments = serializers.DecimalField(max_digits=20, decimal_places=2, read_only=True)
+    portfolio_growth_percentage = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    companies_invested_count = serializers.IntegerField(read_only=True)
+    investment_sectors = serializers.DictField(read_only=True)
+    active_investments = serializers.ListField(read_only=True)
+    monthly_performance = serializers.ListField(read_only=True)
+    investment_by_index = serializers.DictField(read_only=True)
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            'id', 'username', 'first_name', 'last_name', 'date_joined',
+            'total_investments', 'portfolio_growth_percentage',
+            'companies_invested_count', 'investment_sectors',
+            'active_investments', 'monthly_performance',
+            'investment_by_index'
+        ]
+        read_only_fields = fields
+
     

@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import Index
 from companies.models import Company
 from companies.serializers import CompanySerializer
+from investments.models import Investment
+from django.db.models import Sum, Count
 
 class IndexSerializer(serializers.ModelSerializer):
     companies = CompanySerializer(many=True, read_only=True)
@@ -11,6 +13,8 @@ class IndexSerializer(serializers.ModelSerializer):
         source='companies',
         queryset=Company.objects.all()
     )
+    company_count = serializers.SerializerMethodField()
+    total_investment = serializers.SerializerMethodField()
 
     class Meta:
         model = Index
@@ -24,6 +28,20 @@ class IndexSerializer(serializers.ModelSerializer):
             'max_companies',
             'status',
             'created_at',
-            'updated_at'
+            'updated_at',
+            'company_count',
+            'total_investment'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at'] 
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_company_count(self, obj):
+        return obj.companies.count()
+
+    def get_total_investment(self, obj):
+        total = Investment.objects.filter(
+            index=obj,
+            status='ACTIVE'
+        ).aggregate(
+            total=Sum('amount')
+        )['total'] or 0
+        return total
