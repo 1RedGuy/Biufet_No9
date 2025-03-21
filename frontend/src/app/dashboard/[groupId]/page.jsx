@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import indexesService from "@/network/indexes";
 import investmentsService from "@/network/investments";
+import { getUserCredits } from '@/network/deposit-money';
 
 export default function GroupPage() {
   const { groupId } = useParams();
@@ -17,6 +18,7 @@ export default function GroupPage() {
   const [investAmount, setInvestAmount] = useState(100);
   const [isInvesting, setIsInvesting] = useState(false);
   const [investmentError, setInvestmentError] = useState(null);
+  const [userCredits, setUserCredits] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,9 +59,16 @@ export default function GroupPage() {
     router.push("/dashboard");
   };
 
-  const handleInvestClick = () => {
-    setShowInvestModal(true);
-    setInvestmentError(null);
+  const handleInvestClick = async () => {
+    try {
+      const creditsData = await getUserCredits();
+      setUserCredits(creditsData.credits);
+      setShowInvestModal(true);
+      setInvestmentError(null);
+    } catch (err) {
+      console.error('Error loading user credits:', err);
+      setInvestmentError('Failed to load your available credits. Please try again.');
+    }
   };
 
   const handleCloseModal = () => {
@@ -405,12 +414,17 @@ export default function GroupPage() {
             </p>
 
             <div className="mb-6">
-              <label
-                htmlFor="investAmount"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Investment Amount ($)
-              </label>
+              <div className="flex justify-between items-center mb-4">
+                <label
+                  htmlFor="investAmount"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Investment Amount ($)
+                </label>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Available Credits: ${userCredits.toLocaleString()}
+                </div>
+              </div>
               <div className="relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <span className="text-gray-500 sm:text-sm">$</span>
