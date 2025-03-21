@@ -53,7 +53,7 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white dark:from-primary-950 dark:to-gray-950">
+    <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white dark:from-primary-950 dark:to-gray-950 pt-20">
       <div className="flex flex-col items-center justify-center px-4 py-8 mx-auto md:h-screen lg:py-0">
         <Link href="/" className="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
           Biufet

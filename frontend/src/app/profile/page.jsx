@@ -190,7 +190,7 @@ export default function YourProfile() {
                         <p className="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400">{userData.portfolioGrowth}</p>
                     </div>
                     <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-4 sm:p-6">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">Companies Invested</h3>
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">Indexes Invested</h3>
                         <p className="text-2xl sm:text-3xl font-bold text-gray-700 dark:text-gray-300">{userData.companiesInvested}</p>
                     </div>
                 </div>

@@ -56,10 +56,10 @@ const authService = {
     }
   },
 
-  async login(email, password) {
+  async login(username, password) {
     try {
       const response = await api.post('/accounts/login/', {
-        email,
+        username,
         password,
       });
       
@@ -74,7 +74,7 @@ const authService = {
     } catch (error) {
       // Handle specific error cases
       if (error.response?.status === 401) {
-        throw { message: 'Invalid email or password' };
+        throw { message: 'Invalid username or password' };
       }
       if (error.response?.status === 400) {
         throw { message: error.response.data.message || 'Invalid login data' };
