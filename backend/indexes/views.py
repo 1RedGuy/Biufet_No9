@@ -84,9 +84,9 @@ class IndexViewSet(viewsets.ModelViewSet):
     def activate(self, request, pk=None):
         """Activate an index"""
         index = self.get_object()
-        if index.status != 'draft':
+        if index.status == 'archived':
             return Response(
-                {'error': 'Only draft indexes can be activated'},
+                {'error': 'Archived indexes cannot be activated'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         index.status = 'active'
@@ -112,7 +112,6 @@ class IndexViewSet(viewsets.ModelViewSet):
         index = self.get_object()
         companies = index.companies.all()
         
-        # Calculate statistics
         stats = {
             'total_companies': companies.count(),
             'total_market_cap': companies.aggregate(Sum('market_cap'))['market_cap__sum'],
@@ -147,7 +146,6 @@ class IndexViewSet(viewsets.ModelViewSet):
         """Get overall statistics for all indexes"""
         indexes = self.get_queryset()
         
-        # Calculate statistics
         stats = {
             'total_indexes': indexes.count(),
             'active_indexes': indexes.filter(status='active').count(),
@@ -156,3 +154,29 @@ class IndexViewSet(viewsets.ModelViewSet):
         }
         
         return Response(stats)
+
+    @action(detail=True, methods=['post'])
+    def execute(self, request, pk=None):
+        """Execute an index"""
+        index = self.get_object()
+        if index.status == 'archived':
+            return Response(
+                {'error': 'Archived indexes cannot be executed'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        index.status = 'executed'
+        index.save()
+        return Response(self.get_serializer(index).data)
+
+    @action(detail=True, methods=['post'])
+    def set_draft(self, request, pk=None):
+        """Set an index back to draft status"""
+        index = self.get_object()
+        if index.status == 'archived':
+            return Response(
+                {'error': 'Archived indexes cannot be set to draft'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        index.status = 'draft'
+        index.save()
+        return Response(self.get_serializer(index).data)

@@ -32,12 +32,21 @@ export default function ManageItems() {
             setStatusLoading(indexId);
             setError(null);
 
-            if (newStatus === 'active') {
-                await indexesService.activateIndex(indexId);
-            } else if (newStatus === 'archived') {
-                await indexesService.archiveIndex(indexId);
-            } else {
-                throw new Error('Invalid status transition');
+            switch (newStatus) {
+                case 'active':
+                    await indexesService.activateIndex(indexId);
+                    break;
+                case 'archived':
+                    await indexesService.archiveIndex(indexId);
+                    break;
+                case 'executed':
+                    await indexesService.executeIndex(indexId);
+                    break;
+                case 'draft':
+                    await indexesService.setIndexDraft(indexId);
+                    break;
+                default:
+                    throw new Error('Invalid status transition');
             }
             
             // Refresh the indexes list
@@ -51,18 +60,12 @@ export default function ManageItems() {
     };
 
     const getAvailableStatusTransitions = (currentStatus) => {
-        switch (currentStatus) {
-            case 'draft':
-                return ['draft', 'active', 'archived'];
-            case 'active':
-                return ['active', 'archived'];
-            case 'executed':
-                return ['executed', 'archived'];
-            case 'archived':
-                return ['archived'];
-            default:
-                return [];
+        // Allow all status transitions except from archived
+        if (currentStatus === 'archived') {
+            return ['archived'];
         }
+        // Return all possible statuses except the current one
+        return ['draft', 'active', 'executed', 'archived'].filter(status => status !== currentStatus);
     };
 
     const filteredIndexes = selectedStatus === 'all'
@@ -139,7 +142,7 @@ export default function ManageItems() {
                                     <select
                                         value={index.status}
                                         onChange={(e) => handleStatusChange(index.id, e.target.value)}
-                                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full sm:w-[200px] p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                         disabled={statusLoading === index.id || !getAvailableStatusTransitions(index.status).length}
                                     >
                                         {getAvailableStatusTransitions(index.status).map(status => (

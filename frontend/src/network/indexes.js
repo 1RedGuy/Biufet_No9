@@ -206,6 +206,28 @@ const indexesService = {
       throw error;
     }
   },
+
+  async executeIndex(id) {
+    try {
+      const api = createApiInstance();
+      const response = await api.post(`indexes/${id}/execute/`);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to execute index ${id}:`, error.message);
+      throw error;
+    }
+  },
+
+  async setIndexDraft(id) {
+    try {
+      const api = createApiInstance();
+      const response = await api.post(`indexes/${id}/set_draft/`);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to set index ${id} to draft:`, error.message);
+      throw error;
+    }
+  },
 };
 
 export default indexesService;

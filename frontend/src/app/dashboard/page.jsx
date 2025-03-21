@@ -15,6 +15,23 @@ export default function Dashboard() {
     average_companies_per_index: 0,
   });
 
+  const statusColors = {
+    draft: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+    active: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    executed: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    archived: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
+  };
+
+  const getStatusLabel = (status) => {
+    const labels = {
+      draft: 'Draft',
+      active: 'Active (Voting)',
+      executed: 'Executed',
+      archived: 'Archived'
+    };
+    return labels[status] || status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -36,7 +53,7 @@ export default function Dashboard() {
         const formattedIndexes = indexList.map((index) => ({
           id: index.id,
           name: index.name,
-          description: index.description,
+          status: index.status,
           companyCount: index.company_count || 0,
           status: index.status,
           totalInvestment: index.total_investment
@@ -47,8 +64,15 @@ export default function Dashboard() {
           path: `/dashboard/${index.id}`,
         }));
 
+        // Calculate average companies locally if needed
+        const totalCompanies = formattedIndexes.reduce((sum, index) => sum + index.companyCount, 0);
+        const avgCompanies = formattedIndexes.length > 0 ? totalCompanies / formattedIndexes.length : 0;
+
         setIndexes(formattedIndexes);
-        setStats(statsResponse);
+        setStats({
+          ...statsResponse,
+          average_companies_per_index: avgCompanies
+        });
       } catch (error) {
         console.error("Dashboard: Error fetching data:", error);
       } finally {
@@ -154,6 +178,16 @@ export default function Dashboard() {
             >
               Archived
             </button>
+            <button
+              onClick={() => setActiveFilter('executed')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                activeFilter === 'executed'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              Executed
+            </button>
           </div>
         </div>
 
@@ -179,7 +213,7 @@ export default function Dashboard() {
               Avg. Companies
             </h3>
             <p className="text-3xl font-bold text-gray-900 dark:text-white">
-              {stats.average_companies_per_index}
+              {stats.average_companies_per_index?.toFixed(1) || 0}
             </p>
           </div>
         </div>
@@ -223,7 +257,11 @@ export default function Dashboard() {
                     {index.name}
                   </h3>
                   <p className="text-gray-500 dark:text-gray-400">
-                    {index.description}
+                    {index.status && (
+                      <span className={`inline-block px-2.5 py-0.5 text-sm font-medium rounded-full ${statusColors[index.status]}`}>
+                        {getStatusLabel(index.status)}
+                      </span>
+                    )}
                   </p>
                   {index.status && (
                     <div className="mt-2">
