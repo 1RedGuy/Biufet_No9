@@ -36,7 +36,7 @@ class CreateVoteSerializer(serializers.Serializer):
             raise serializers.ValidationError({"index_id": "Index does not exist"})
         
         # Check if the index is in voting status
-        if index.status != 'voting':
+        if index.status != 'VOTING':
             raise serializers.ValidationError({
                 "index_id": f"Voting is not allowed for this index. Current status: {index.status}"
             })
@@ -63,8 +63,10 @@ class CreateVoteSerializer(serializers.Serializer):
         # Check if the investment exists and belongs to the user
         user = self.context['request'].user
         try:
-            investment = user.investments.get(pk=data['investment_id'])
-        except Exception:
+            from investments.models import Investment
+            # Explicitly filter by user to ensure only user's investments can be used
+            investment = Investment.objects.get(pk=data['investment_id'], user=user)
+        except Investment.DoesNotExist:
             raise serializers.ValidationError({
                 "investment_id": "Investment does not exist or doesn't belong to you"
             })
@@ -126,10 +128,9 @@ class CreateVoteSerializer(serializers.Serializer):
             company = Company.objects.get(pk=company_id)
             CompanyVoteCount.update_vote_count(index, company)
         
-        # Mark investment as voted using the new has_voted flag
-        # Keep status as ACTIVE so it still counts in portfolio calculations
+        # Mark investment as voted and update status
         investment.has_voted = True
-        investment.status = 'VOTED'    
+        investment.status = 'VOTED'
         investment.save()
         
         return created_votes 

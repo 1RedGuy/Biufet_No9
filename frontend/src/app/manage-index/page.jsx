@@ -33,16 +33,16 @@ export default function ManageItems() {
             setError(null);
 
             switch (newStatus) {
-                case 'active':
+                case 'ACTIVE':
                     await indexesService.activateIndex(indexId);
                     break;
-                case 'archived':
+                case 'ARCHIVED':
                     await indexesService.archiveIndex(indexId);
                     break;
-                case 'executed':
+                case 'EXECUTED':
                     await indexesService.executeIndex(indexId);
                     break;
-                case 'draft':
+                case 'DRAFT':
                     await indexesService.setIndexDraft(indexId);
                     break;
                 default:
@@ -61,11 +61,11 @@ export default function ManageItems() {
 
     const getAvailableStatusTransitions = (currentStatus) => {
         // Allow all status transitions except from archived
-        if (currentStatus === 'archived') {
-            return ['archived'];
+        if (currentStatus === 'ARCHIVED') {
+            return ['ARCHIVED'];
         }
         // Return all possible statuses except the current one
-        return ['draft', 'active', 'executed', 'archived'].filter(status => status !== currentStatus);
+        return ['DRAFT', 'ACTIVE', 'EXECUTED', 'ARCHIVED'].filter(status => status !== currentStatus);
     };
 
     const filteredIndexes = selectedStatus === 'all'
@@ -73,18 +73,18 @@ export default function ManageItems() {
         : indexes.filter(index => index.status === selectedStatus);
 
     const statusColors = {
-        draft: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
-        active: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-        executed: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-        archived: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
+        DRAFT: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+        ACTIVE: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+        EXECUTED: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+        ARCHIVED: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
     };
 
     const getStatusLabel = (status) => {
         const labels = {
-            draft: 'Draft',
-            active: 'Active (Voting)',
-            executed: 'Executed',
-            archived: 'Archived'
+            DRAFT: 'Draft',
+            ACTIVE: 'Active (Voting)',
+            EXECUTED: 'Executed',
+            ARCHIVED: 'Archived'
         };
         return labels[status] || status.charAt(0).toUpperCase() + status.slice(1);
     };
@@ -116,10 +116,10 @@ export default function ManageItems() {
                             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         >
                             <option value="all">All Indexes</option>
-                            <option value="draft">Draft</option>
-                            <option value="active">Active (Voting)</option>
-                            <option value="executed">Executed</option>
-                            <option value="archived">Archived</option>
+                            <option value="DRAFT">Draft</option>
+                            <option value="ACTIVE">Active (Voting)</option>
+                            <option value="EXECUTED">Executed</option>
+                            <option value="ARCHIVED">Archived</option>
                         </select>
                     </div>
 

@@ -38,7 +38,7 @@ class UpdateInvestmentsView(APIView):
     def post(self, request):
         try:
             # Get all investments
-            investments = Investment.objects.filter(status='active')
+            investments = Investment.objects.filter(status='ACTIVE')
             
             # Update each investment's positions
             updated_count = 0

@@ -95,9 +95,9 @@ export default function GroupPage() {
 
         // If index is in voting status or later, fetch vote weights
         if (
-          indexDetails.status === "voting" ||
-          indexDetails.status === "executed" ||
-          indexDetails.status === "archived"
+          indexDetails.status === "VOTING" ||
+          indexDetails.status === "EXECUTED" ||
+          indexDetails.status === "ARCHIVED"
         ) {
           setLoadingVoteWeights(true);
           try {
@@ -284,14 +284,18 @@ export default function GroupPage() {
       console.log("Vote submission result:", result);
       setVoteSuccess(true);
 
-      // Refresh vote weights
-      const weights = await indexesService.getCompanyVoteWeights(
-        Number(groupId)
-      );
+      // Refresh all data after voting
+      const [indexDetails, indexCompaniesStats, weights, status] = await Promise.all([
+        indexesService.getIndexDetails(Number(groupId)),
+        indexesService.getIndexCompaniesStats(Number(groupId)),
+        indexesService.getCompanyVoteWeights(Number(groupId)),
+        votingService.getIndexVotingStatus(Number(groupId))
+      ]);
+      
+      // Update state with fresh data
+      setIndexData(indexDetails);
+      setCompanyStats(indexCompaniesStats);
       setVoteWeights(weights);
-
-      // Update voting status
-      const status = await votingService.getIndexVotingStatus(Number(groupId));
       setVotingStatus(status);
 
       // Close modal after 2 seconds
@@ -463,11 +467,11 @@ export default function GroupPage() {
               <div className="mt-2">
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    indexData.status === "active"
+                    indexData.status === "ACTIVE"
                       ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
-                      : indexData.status === "voting"
+                      : indexData.status === "VOTING"
                       ? "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
-                      : indexData.status === "executed"
+                      : indexData.status === "EXECUTED"
                       ? "bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100"
                       : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
                   }`}
@@ -486,7 +490,7 @@ export default function GroupPage() {
                   {totalInvestment}
                 </p>
               </div>
-              {indexData.status === "active" && (
+              {indexData.status === "ACTIVE" && (
                 <button
                   className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
                   onClick={handleInvestClick}
@@ -494,7 +498,7 @@ export default function GroupPage() {
                   Invest
                 </button>
               )}
-              {indexData.status !== "active" && (
+              {indexData.status !== "ACTIVE" && (
                 <div className="px-6 py-2 bg-gray-300 text-gray-600 rounded-lg text-sm font-medium cursor-not-allowed">
                   Investing Unavailable
                 </div>
@@ -536,13 +540,23 @@ export default function GroupPage() {
         )}
 
         {/* Vote Weights section - only show if in voting stage or later and weights exist */}
-        {(indexData?.status === "voting" ||
-          indexData?.status === "executed" ||
-          indexData?.status === "archived") && (
+        {(indexData?.status === "VOTING" ||
+          indexData?.status === "EXECUTED" ||
+          indexData?.status === "ARCHIVED") && (
           <div className="mb-8">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-              Vote Weights
+              {indexData.status === "EXECUTED" || indexData.status === "ARCHIVED" 
+                ? "Final Vote Distribution" 
+                : "Vote Weights"}
             </h2>
+            {(indexData.status === "EXECUTED" || indexData.status === "ARCHIVED") && (
+              <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/30 rounded-lg text-green-700 dark:text-green-300 text-sm">
+                <p>
+                  These are the final voting results that determined the selected companies.
+                  Each selected company has been allocated an equal portion of the total investment.
+                </p>
+              </div>
+            )}
             <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -631,83 +645,123 @@ export default function GroupPage() {
         )}
 
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-          Companies
+          {indexData.status === "EXECUTED" || indexData.status === "ARCHIVED" 
+            ? "Final Selected Companies" 
+            : "Companies"}
         </h2>
+        
+        {(indexData.status === "EXECUTED" || indexData.status === "ARCHIVED") && (
+          <div className="mb-4 p-4 bg-primary-50 dark:bg-primary-900/30 rounded-lg text-primary-700 dark:text-primary-300 text-sm">
+            <p className="mb-1 font-medium">Execution Complete</p>
+            <p>
+              Based on voting results, these companies have been selected for the final index composition. 
+              The total investment has been distributed equally across these companies.
+            </p>
+          </div>
+        )}
 
         {indexData.companies && indexData.companies.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {indexData.companies.map((company) => (
-              <div
-                key={company.id}
-                className={`bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-6 hover:shadow-lg transition-all duration-300 flex flex-col h-full ${
-                  selectedCompanies.includes(company.id)
-                    ? "ring-2 ring-primary-500"
-                    : ""
-                }`}
-              >
-                <div className="flex items-start justify-between mb-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                      {company.name}
-                    </h3>
-                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                      {company.ticker} • {company.sector || "N/A"}
+            {/* When index is EXECUTED or ARCHIVED, filter to show only companies with votes */}
+            {(() => {
+              // Get filtered companies for executed indexes
+              const filteredCompanies = indexData.status === "EXECUTED" || indexData.status === "ARCHIVED"
+                ? indexData.companies.filter(company => 
+                    voteWeights.some(weight => weight.company_id === company.id)
+                  )
+                : indexData.companies;
+                
+              // If no companies after filtering, show a message
+              if (filteredCompanies.length === 0 && (indexData.status === "EXECUTED" || indexData.status === "ARCHIVED")) {
+                return (
+                  <div className="col-span-3 bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-6">
+                    <p className="text-gray-600 dark:text-gray-300 text-center">
+                      No companies were selected in the voting phase for this index.
                     </p>
                   </div>
-                  <div className="text-right">
-                    <span
-                      className={`text-lg font-bold ${
-                        company.price_change > 0
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-red-600 dark:text-red-400"
-                      }`}
-                    >
-                      {company.price_change > 0 ? "+" : ""}
-                      {company.price_change}%
-                    </span>
+                );
+              }
+              
+              // Otherwise, map through the filtered companies
+              return filteredCompanies.map((company) => (
+                <div
+                  key={company.id}
+                  className={`bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-6 hover:shadow-lg transition-all duration-300 flex flex-col h-full ${
+                    selectedCompanies.includes(company.id)
+                      ? "ring-2 ring-primary-500"
+                      : ""
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                        {company.name}
+                      </h3>
+                      <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                        {company.ticker} • {company.sector || "N/A"}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span
+                        className={`text-lg font-bold ${
+                          company.price_change > 0
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-red-600 dark:text-red-400"
+                        }`}
+                      >
+                        {company.price_change > 0 ? "+" : ""}
+                        {company.price_change}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-auto flex justify-between items-end">
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Price: ${" "}
+                        {typeof company.price === "number"
+                          ? company.price.toFixed(2)
+                          : parseFloat(company.price || 0).toFixed(2)}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Market Cap: ${(company.market_cap / 1000000).toFixed(1)}M
+                      </p>
+                      {/* Show allocation for executed indexes */}
+                      {(indexData.status === "EXECUTED" || indexData.status === "ARCHIVED") && (
+                        <p className="text-sm font-medium text-primary-600 dark:text-primary-400">
+                          Allocation: ${(indexData.total_investment / filteredCompanies.length).toFixed(2)}
+                        </p>
+                      )}
+                    </div>
+                    {/* Vote button - always enabled during voting phase */}
+                    {indexData.status === "VOTING" ? (
+                      <button
+                        className={`ml-4 px-4 py-1.5 border rounded-lg transition-colors text-sm font-medium
+                          ${
+                            selectedCompanies.includes(company.id)
+                              ? "bg-primary-600 text-white border-primary-600"
+                              : "border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white"
+                          }
+                        `}
+                        onClick={() => handleVoteClick(company.id)}
+                      >
+                        {selectedCompanies.includes(company.id)
+                          ? "Selected"
+                          : "Vote"}
+                      </button>
+                    ) : (
+                      <button
+                        className="ml-4 px-4 py-1.5 border border-gray-300 text-gray-400 rounded-lg cursor-not-allowed text-sm font-medium"
+                        disabled
+                      >
+                        {indexData.status === "DRAFT"
+                          ? "Not Votable"
+                          : "Voting Closed"}
+                      </button>
+                    )}
                   </div>
                 </div>
-                <div className="mt-auto flex justify-between items-end">
-                  <div className="space-y-1">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Price: ${" "}
-                      {typeof company.price === "number"
-                        ? company.price.toFixed(2)
-                        : parseFloat(company.price || 0).toFixed(2)}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Market Cap: ${(company.market_cap / 1000000).toFixed(1)}M
-                    </p>
-                  </div>
-                  {/* Vote button - always enabled during voting phase */}
-                  {indexData.status === "voting" ? (
-                    <button
-                      className={`ml-4 px-4 py-1.5 border rounded-lg transition-colors text-sm font-medium
-                        ${
-                          selectedCompanies.includes(company.id)
-                            ? "bg-primary-600 text-white border-primary-600"
-                            : "border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white"
-                        }
-                      `}
-                      onClick={() => handleVoteClick(company.id)}
-                    >
-                      {selectedCompanies.includes(company.id)
-                        ? "Selected"
-                        : "Vote"}
-                    </button>
-                  ) : (
-                    <button
-                      className="ml-4 px-4 py-1.5 border border-gray-300 text-gray-400 rounded-lg cursor-not-allowed text-sm font-medium"
-                      disabled
-                    >
-                      {indexData.status === "draft"
-                        ? "Not Votable"
-                        : "Voting Closed"}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+              ));
+            })()}
           </div>
         ) : (
           <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-6">
@@ -718,7 +772,7 @@ export default function GroupPage() {
         )}
 
         {/* Add a floating vote button if companies are selected - simplified condition */}
-        {indexData.status === "voting" && selectedCompanies.length > 0 && (
+        {indexData.status === "VOTING" && selectedCompanies.length > 0 && (
           <div className="fixed bottom-8 right-8 z-30">
             <button
               className="px-6 py-3 bg-primary-600 text-white rounded-lg shadow-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center gap-2"

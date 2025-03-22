@@ -47,7 +47,7 @@ class IndexSerializer(serializers.ModelSerializer):
     def get_total_investment(self, obj):
         total = Investment.objects.filter(
             index=obj,
-            status='ACTIVE'
+            status__in=['ACTIVE', 'VOTED']
         ).aggregate(
             total=Sum('amount')
         )['total'] or 0

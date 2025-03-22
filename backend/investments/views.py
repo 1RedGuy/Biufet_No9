@@ -172,8 +172,14 @@ class InvestmentViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def generate_positions(self, request, pk=None):
         """
-        Generate investment positions based on voting results for an individual investment
+        Generate investment positions based on voting results for an individual investment.
+        This will:
+        1. Determine the optimal number of companies to include based on voting patterns
+        2. Select the top N voted companies
+        3. Create equal-weighted positions for those companies
+        4. Update the investment status to 'LOCKED'
         """
+        # Get the investment, ensuring it belongs to the current user (handled by get_object())
         investment = self.get_object()
         
         # Check if investment is in VOTED status
@@ -182,36 +188,96 @@ class InvestmentViewSet(viewsets.ModelViewSet):
                 'error': 'Can only generate positions for investments in VOTED status'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Find the voting session for this investment's index
+        # Find vote counts for this index
         try:
-            from voting.models import VotingSession, VotingResult
-            voting_session = VotingSession.objects.get(index=investment.index)
+            from voting.models import CompanyVoteCount, Vote
             
-            # Check if voting has completed
-            if voting_session.status != 'completed':
+            # Check if index is in voting or has completed voting
+            if investment.index.status not in ['VOTING', 'EXECUTED']:
                 return Response({
-                    'error': 'Voting must be completed before generating positions'
+                    'error': f'Index is in {investment.index.status} status, not in voting or executed status'
                 }, status=status.HTTP_400_BAD_REQUEST)
                 
-            # Get top voted companies
-            top_companies = VotingResult.objects.filter(
-                session=voting_session
-            ).order_by('rank')[:voting_session.max_votes_allowed]
+            # Get all companies that received votes, ordered by vote weight
+            company_votes = CompanyVoteCount.objects.filter(
+                index=investment.index
+            ).order_by('-total_weight')
+            
+            if not company_votes.exists():
+                return Response({
+                    'error': 'No votes have been cast for this index'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # 1. Determine the optimal number of companies to include
+            
+            # Get min and max bounds for the number of companies
+            min_companies = investment.index.min_votes_per_user  # Minimum is the min votes per user
+            max_companies = investment.index.max_votes_per_user  # Maximum is the max votes per user
+            
+            # Check if we even have enough companies with votes
+            total_companies_with_votes = company_votes.count()
+            if total_companies_with_votes < min_companies:
+                return Response({
+                    'error': f'Not enough companies received votes. Need at least {min_companies} companies.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Analyze voting patterns to find the most common number of votes per user
+            vote_counts_per_user = {}
+            
+            # First, get all users who voted
+            users_who_voted = Vote.objects.filter(
+                index=investment.index
+            ).values_list('user', flat=True).distinct()
+            
+            # Count how many companies each user voted for
+            for user_id in users_who_voted:
+                companies_voted_by_user = Vote.objects.filter(
+                    index=investment.index, 
+                    user_id=user_id
+                ).values_list('company', flat=True).distinct().count()
+                
+                if companies_voted_by_user in vote_counts_per_user:
+                    vote_counts_per_user[companies_voted_by_user] += 1
+                else:
+                    vote_counts_per_user[companies_voted_by_user] = 1
+            
+            # Find the most common pattern (mode of votes per user)
+            mode_votes = min_companies  # Default to min if no clear pattern
+            if vote_counts_per_user:
+                mode_votes = max(vote_counts_per_user.items(), key=lambda x: x[1])[0]
+            
+            # Choose the number of companies based on our rules
+            # 1. At least min_companies
+            # 2. At most max_companies
+            # 3. Prefer the most common voting pattern if within bounds
+            num_companies = max(min(mode_votes, max_companies), min_companies)
+            
+            # Limit to available companies
+            num_companies = min(num_companies, total_companies_with_votes)
+            
+            # 2. Get the top N companies by vote weight
+            top_companies = list(company_votes[:num_companies])
             
             if not top_companies:
                 return Response({
-                    'error': 'No voting results found'
+                    'error': 'Failed to determine top companies'
                 }, status=status.HTTP_400_BAD_REQUEST)
-                
+            
+            # 3. Create positions for each top voted company
+            from decimal import Decimal
+            
             # Calculate equal weight for each company
             company_count = len(top_companies)
-            company_weight = 100 / company_count
+            company_weight = Decimal('100.0') / Decimal(company_count)
+            
+            # Clear any existing positions first
+            investment.positions.all().delete()
             
             # Create positions for each top voted company
             created_positions = []
-            for result in top_companies:
-                company = result.company
-                position_amount = (investment.amount * company_weight) / 100
+            for vote_count in top_companies:
+                company = vote_count.company
+                position_amount = (investment.amount * company_weight) / Decimal('100.0')
                 
                 position, created = InvestmentPosition.objects.update_or_create(
                     investment=investment,
@@ -219,9 +285,9 @@ class InvestmentViewSet(viewsets.ModelViewSet):
                     defaults={
                         'amount': position_amount,
                         'weight': company_weight,
-                        'quantity': position_amount / (company.current_price or 1),
-                        'purchase_price': company.current_price or 1,
-                        'current_price': company.current_price or 1
+                        'quantity': position_amount / (company.current_price or Decimal('1.0')),
+                        'purchase_price': company.current_price or Decimal('1.0'),
+                        'current_price': company.current_price or Decimal('1.0')
                     }
                 )
                 created_positions.append(position)
@@ -233,11 +299,22 @@ class InvestmentViewSet(viewsets.ModelViewSet):
             investment.status = 'LOCKED'
             investment.save()
             
-            # Return created positions
+            # Return created positions with additional information
             serializer = InvestmentPositionSerializer(created_positions, many=True)
-            return Response(serializer.data)
-            
-        except VotingSession.DoesNotExist:
             return Response({
-                'error': 'No voting session found for this investment index'
+                'positions': serializer.data,
+                'number_of_companies_selected': company_count,
+                'voting_pattern_analysis': {
+                    'min_votes_per_user': min_companies,
+                    'max_votes_per_user': max_companies,
+                    'most_common_votes_per_user': mode_votes,
+                    'final_selected_count': num_companies,
+                    'total_companies_with_votes': total_companies_with_votes,
+                    'vote_distribution': vote_counts_per_user
+                }
+            })
+            
+        except Exception as e:
+            return Response({
+                'error': f'Failed to generate positions: {str(e)}'
             }, status=status.HTTP_400_BAD_REQUEST)

@@ -14,9 +14,11 @@ class VoteViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        """Only return votes created by the current user"""
         return Vote.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
+        """Ensure vote is associated with current user"""
         serializer.save(user=self.request.user)
 
     @action(detail=False, methods=['post'])
@@ -24,6 +26,7 @@ class VoteViewSet(viewsets.ModelViewSet):
         """
         Submit votes for companies in an index.
         Requires index_id, company_ids, and investment_id.
+        The investment must belong to the current user.
         """
         serializer = CreateVoteSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -86,10 +89,10 @@ class IndexVotingStatusView(generics.RetrieveAPIView):
         user_investments = request.user.investments.filter(index=index)
         has_investment = user_investments.exists()
         
-        # Check if user has already voted in this index (considering existing votes)
+        # Check if user has already voted in this index
         has_voted = Vote.objects.filter(
             user=request.user, 
-            investment__index=index  # Use investment relation to find votes for this index
+            index=index
         ).exists()
         
         # Get the user's active investments in this index that haven't been used for voting
@@ -98,7 +101,7 @@ class IndexVotingStatusView(generics.RetrieveAPIView):
         return Response({
             'index_id': index.id,
             'status': index.status,
-            'is_voting_active': index.status == 'voting',
+            'is_voting_active': index.status == 'VOTING',
             'has_investment': has_investment,
             'has_voted': has_voted,
             'active_investments': [

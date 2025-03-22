@@ -5,11 +5,11 @@ from companies.models import Company
 
 class Index(models.Model):
     STATUS_CHOICES = [
-        ('draft', _('Draft')),           # Initial state
-        ('active', _('Active')),         # Ready for investments and voting
-        ('voting', _('Voting')),         # In voting phase
-        ('executed', _('Executed')),     # Voting completed and investments processed
-        ('archived', _('Archived')),     # No longer active
+        ('DRAFT', _('Draft')),           # Initial state
+        ('ACTIVE', _('Active')),         # Ready for investments and voting
+        ('VOTING', _('Voting')),         # In voting phase
+        ('EXECUTED', _('Executed')),     # Voting completed and investments processed
+        ('ARCHIVED', _('Archived')),     # No longer active
     ]
 
     name = models.CharField(max_length=255, verbose_name=_('Index Name'))
@@ -47,7 +47,7 @@ class Index(models.Model):
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default='draft',
+        default='DRAFT',
         verbose_name=_('Status')
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -74,14 +74,24 @@ class Index(models.Model):
             raise ValidationError(_('Voting start date must be after investment end date'))
         if self.voting_end_date and self.voting_start_date and self.voting_end_date <= self.voting_start_date:
             raise ValidationError(_('Voting end date must be after voting start date'))
-        if self.companies.count() < self.min_companies:
+            
+        # Skip companies validation entirely for non-ACTIVE statuses
+        # Only validate companies count for active indexes
+        if not self.pk or self.status != 'ACTIVE':
+            return
+            
+        # Count the number of companies
+        company_count = self.companies.count()
+        
+        # Only enforce minimum when status is ACTIVE
+        if company_count < self.min_companies:
             raise ValidationError(_('Number of companies cannot be less than minimum companies'))
-        if self.companies.count() > self.max_companies:
+        if company_count > self.max_companies:
             raise ValidationError(_('Number of companies cannot be more than maximum companies'))
 
     def is_voting_active(self):
         """Check if the index is currently in voting phase"""
-        return self.status == 'voting'
+        return self.status == 'VOTING'
 
     def get_total_vote_weight_for_company(self, company):
         """Get the total vote weight for a company in this index"""

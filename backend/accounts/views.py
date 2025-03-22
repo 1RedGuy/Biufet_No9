@@ -187,20 +187,25 @@ class UserProfileView(APIView):
 
         # Calculate sector totals
         sector_totals = {}
+        print(f"Processing sectors for user {user.username}:")
         for position in positions:
             sector_code = position.company.sector
             sector_name = dict(Company.SECTOR_CHOICES).get(sector_code, 'Other')
             # Convert gettext_lazy proxy object to string
             if hasattr(sector_name, '_proxy____cast'):
                 sector_name = str(sector_name)
+            
             current_value = position.quantity * position.current_price
             sector_totals[sector_name] = sector_totals.get(sector_name, Decimal('0.00')) + current_value
+            print(f"  - Added {current_value} to sector {sector_name} from company {position.company.name}")
 
         # Format sector data
         investment_sectors = {
             sector: float(amount)
             for sector, amount in sector_totals.items()
         }
+        
+        print(f"Final sector totals: {investment_sectors}")
 
         # Get monthly performance data (last 12 months)
         twelve_months_ago = timezone.now() - timedelta(days=365)

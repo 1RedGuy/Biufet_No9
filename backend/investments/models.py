@@ -50,10 +50,10 @@ class Investment(models.Model):
     )
     profit_loss = models.DecimalField(
         max_digits=20, 
-        decimal_places=2, 
-        default=Decimal('0.00'),
-        help_text=_("Current profit or loss"),
-        verbose_name=_('Profit/Loss')
+        decimal_places=2,
+        help_text=_("Profit or loss from this investment"),
+        verbose_name=_('Profit/Loss'),
+        default=Decimal('0.00')
     )
     profit_loss_percentage = models.DecimalField(
         max_digits=10, 
@@ -67,14 +67,15 @@ class Investment(models.Model):
         verbose_name=_('Investment Date')
     )
     status = models.CharField(
-        max_length=20,
+        max_length=10,
         choices=STATUS_CHOICES,
-        default='PENDING',
+        default='ACTIVE',
+        help_text=_("Current status of the investment"),
         verbose_name=_('Status')
     )
     has_voted = models.BooleanField(
         default=False,
-        help_text=_("Whether this investment has been used for voting"),
+        help_text=_("Indicates if this investment has been used for voting"),
         verbose_name=_('Has Voted')
     )
     transaction_id = models.CharField(

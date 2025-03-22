@@ -109,7 +109,7 @@ class InvestmentSerializer(serializers.ModelSerializer):
 
     def validate_index_id(self, index):
         """Validate that the index is in an investable state"""
-        if index.status != 'active':
+        if index.status != 'ACTIVE':
             raise serializers.ValidationError(
                 f'Cannot invest in index with status: {index.get_status_display()}. Only active indexes are available for investment.'
             )

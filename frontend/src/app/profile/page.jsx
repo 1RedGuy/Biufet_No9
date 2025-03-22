@@ -44,6 +44,8 @@ export default function YourProfile() {
   const fetchData = async () => {
     try {
       const profileData = await fetchUserProfile();
+      console.log("Profile data received:", profileData);
+      console.log("Portfolio growth:", profileData.portfolio_growth_percentage);
       setUserData(profileData);
 
       // Fetch user credits
@@ -160,11 +162,16 @@ export default function YourProfile() {
 
   const generateColors = (count) => {
     const baseColors = [
-      "rgba(59, 130, 246, 0.8)",
-      "rgba(16, 185, 129, 0.8)",
-      "rgba(245, 158, 11, 0.8)",
-      "rgba(139, 92, 246, 0.8)",
-      "rgba(236, 72, 153, 0.8)",
+      "rgba(59, 130, 246, 0.8)",    // Blue
+      "rgba(16, 185, 129, 0.8)",    // Green
+      "rgba(245, 158, 11, 0.8)",    // Yellow/Orange
+      "rgba(139, 92, 246, 0.8)",    // Purple
+      "rgba(236, 72, 153, 0.8)",    // Pink
+      "rgba(239, 68, 68, 0.8)",     // Red
+      "rgba(6, 182, 212, 0.8)",     // Cyan
+      "rgba(132, 204, 22, 0.8)",    // Lime
+      "rgba(249, 115, 22, 0.8)",    // Orange
+      "rgba(168, 85, 247, 0.8)",    // Violet
     ];
 
     if (count <= baseColors.length) {
@@ -179,22 +186,31 @@ export default function YourProfile() {
     return colors;
   };
 
-  const sectorAllocation = {
-    labels:
-      Object.keys(userData.investment_sectors).length > 0
-        ? Object.keys(userData.investment_sectors)
-        : ["Test Investment"],
+  // Debug sector allocation data
+  console.log("Investment by index:", userData.investment_by_index);
+  
+  const indexLabels = Object.keys(userData.investment_by_index).length > 0
+    ? Object.keys(userData.investment_by_index)
+    : ["No Index Data"];
+  
+  const indexValues = Object.keys(userData.investment_by_index).length > 0
+    ? Object.keys(userData.investment_by_index).map(key => userData.investment_by_index[key].current_value)
+    : [userData.total_investments];
+  
+  // Generate appropriate number of colors
+  const indexColors = generateColors(indexLabels.length);
+  console.log("Index labels:", indexLabels);
+  console.log("Index values:", indexValues);
+  console.log("Index colors:", indexColors);
+
+  const indexAllocation = {
+    labels: indexLabels,
     datasets: [
       {
-        data:
-          Object.keys(userData.investment_sectors).length > 0
-            ? Object.values(userData.investment_sectors)
-            : [userData.total_investments],
-        backgroundColor: generateColors(
-          Object.keys(userData.investment_sectors).length > 0
-            ? Object.keys(userData.investment_sectors).length
-            : 1
-        ),
+        data: indexValues,
+        backgroundColor: indexColors,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.5)',
       },
     ],
   };
@@ -248,21 +264,65 @@ export default function YourProfile() {
         position: window.innerWidth < 768 ? "bottom" : "right",
         align: "center",
         labels: {
-          boxWidth: 10,
-          padding: window.innerWidth < 768 ? 8 : 15,
+          boxWidth: 12,
+          padding: window.innerWidth < 768 ? 10 : 15,
           font: {
             size: window.innerWidth < 768 ? 10 : 12,
           },
+          generateLabels: (chart) => {
+            const datasets = chart.data.datasets;
+            const labels = chart.data.labels;
+            
+            if (datasets.length === 0) {
+              return [];
+            }
+            
+            return labels.map((label, i) => {
+              const meta = chart.getDatasetMeta(0);
+              const style = meta.controller.getStyle(i);
+              
+              return {
+                text: `${label} (${(datasets[0].data[i] / chart.data.datasets[0].data.reduce((a, b) => a + b, 0) * 100).toFixed(1)}%)`,
+                fillStyle: datasets[0].backgroundColor[i],
+                strokeStyle: style.borderColor,
+                lineWidth: style.borderWidth,
+                hidden: isNaN(datasets[0].data[i]) || meta.data[i].hidden,
+                index: i
+              };
+            });
+          }
         },
       },
       title: {
         display: true,
-        text: "Investment Sector Allocation",
+        text: "Investment by Index",
         font: {
           size: window.innerWidth < 768 ? 14 : 16,
         },
       },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const index = context.label;
+            const value = context.raw;
+            const total = context.dataset.data.reduce((acc, val) => acc + val, 0);
+            const percentage = ((value / total) * 100).toFixed(1);
+            const formattedValue = new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: 'USD'
+            }).format(value);
+            
+            // Get performance data for this index
+            const indexData = userData.investment_by_index[index];
+            const performanceText = indexData ? 
+              ` (${indexData.performance >= 0 ? '+' : ''}${indexData.performance.toFixed(1)}%)` : '';
+            
+            return `${index}: ${formattedValue}${performanceText}`;
+          }
+        }
+      }
     },
+    cutout: '60%',
   };
 
   return (
@@ -328,7 +388,9 @@ export default function YourProfile() {
                   : "text-red-600 dark:text-red-400"
               }`}
             >
-              {userData.portfolio_growth_percentage.toFixed(1)}%
+              {userData.portfolio_growth_percentage !== undefined && userData.portfolio_growth_percentage !== null
+                ? `${userData.portfolio_growth_percentage.toFixed(1)}%`
+                : "0.0%"}
             </p>
           </div>
           <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-4 sm:p-6 flex flex-col items-center md:items-start text-center md:text-left">
@@ -355,7 +417,7 @@ export default function YourProfile() {
 
           <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-md p-4 sm:p-6">
             <div className="h-[300px] sm:h-[400px]">
-              <Doughnut options={doughnutOptions} data={sectorAllocation} />
+              <Doughnut options={doughnutOptions} data={indexAllocation} />
             </div>
           </div>
         </div>

@@ -16,9 +16,14 @@ export const fetchUserProfile = async () => {
                 'Authorization': `Bearer ${token}`
             }
         });
+        console.log('Raw profile response:', response);
         return response.data;
     } catch (error) {
         console.error('Error fetching user profile:', error);
+        if (error.response) {
+            console.error('Error response data:', error.response.data);
+            console.error('Error response status:', error.response.status);
+        }
         throw error;
     }
 };
