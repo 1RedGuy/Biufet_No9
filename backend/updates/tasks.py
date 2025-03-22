@@ -102,6 +102,10 @@ def update_stock_prices():
             pass
         return None
 
+def run_test_update():
+    """Run a test update immediately and return the result"""
+    return update_stock_prices()
+
 def start_price_updater():
     """Start the price updater thread that runs every 30 minutes"""
     logger.info("Price updater thread started")
