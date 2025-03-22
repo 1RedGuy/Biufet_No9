@@ -100,6 +100,11 @@ class Investment(models.Model):
         auto_now=True,
         verbose_name=_('Last Updated')
     )
+    insurance_claimed = models.BooleanField(
+        default=False,
+        help_text=_("Whether insurance has been claimed for this investment"),
+        verbose_name=_('Insurance Claimed')
+    )
 
     class Meta:
         ordering = ['-investment_date']

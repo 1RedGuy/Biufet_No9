@@ -1,100 +1,102 @@
 from rest_framework import serializers
-from .models import InsurancePolicy, CoveragePayment, Claim
+from .models import InsurancePolicy, InsuranceClaim
 from django.utils import timezone
 from decimal import Decimal
+from datetime import timedelta
 
-class CoveragePaymentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CoveragePayment
-        fields = ['id', 'amount', 'payment_date', 'payment_status', 'transaction_id']
-        read_only_fields = ['payment_date']
-
-class ClaimSerializer(serializers.ModelSerializer):
-    is_eligible = serializers.BooleanField(read_only=True)
-    calculated_payout = serializers.DecimalField(max_digits=20, decimal_places=2, read_only=True)
-
-    class Meta:
-        model = Claim
-        fields = ['id', 'current_investment_value', 'claim_amount', 'submission_date', 
-                 'status', 'processed_date', 'notes', 'is_eligible', 'calculated_payout']
-        read_only_fields = ['submission_date', 'status', 'processed_date', 'claim_amount']
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data['is_eligible'] = instance.is_eligible()
-        if instance.is_eligible():
-            data['calculated_payout'] = str(instance.policy.calculate_payout_amount(instance.current_investment_value))
-        else:
-            data['calculated_payout'] = "0.00"
-        return data
 
 class InsurancePolicySerializer(serializers.ModelSerializer):
-    payments = CoveragePaymentSerializer(many=True, read_only=True)
-    claims = ClaimSerializer(many=True, read_only=True)
-    calculated_premium = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
-    index_name = serializers.CharField(source='index.name', read_only=True)
-    current_risk_factor = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True)
-
+    investment_details = serializers.SerializerMethodField()
+    is_eligible_for_claim = serializers.BooleanField(read_only=True)
+    
     class Meta:
         model = InsurancePolicy
-        fields = ['id', 'user', 'index', 'index_name', 'initial_investment_amount', 
-                 'coverage_amount', 'monthly_premium', 'risk_factor', 'current_risk_factor',
-                 'trigger_percentage', 'start_date', 'end_date', 'is_active', 
-                 'has_claim', 'payments', 'claims', 'calculated_premium']
-        read_only_fields = ['start_date', 'has_claim', 'coverage_amount', 'user', 
-                           'risk_factor', 'current_risk_factor']
-
-    def calculate_coverage_amount(self, investment_amount):
-        """
-        Calculate coverage amount based on investment amount:
-        - For investments >= 5000: fixed 5000 credits coverage
-        - For investments < 5000: proportional coverage based on investment size
-          Formula: (investment_amount / 5000) * 5000
-          This gives a proportional coverage up to the maximum
-        """
-        if investment_amount >= Decimal('5000.00'):
-            return Decimal('5000.00')
-        
-        # Calculate proportional coverage
-        coverage = (investment_amount / Decimal('5000.00')) * Decimal('5000.00')
-        # Round to 2 decimal places
-        return coverage.quantize(Decimal('0.01'))
-
-    def validate(self, data):
-        investment_amount = data.get('initial_investment_amount', 0)
-        
-        # Calculate appropriate coverage amount
-        coverage_amount = self.calculate_coverage_amount(Decimal(str(investment_amount)))
-        data['coverage_amount'] = coverage_amount
-
-        # Validate end_date is in the future
-        if 'end_date' in data and data['end_date'] <= timezone.now():
-            raise serializers.ValidationError(
-                "End date must be in the future."
-            )
-
-        return data
-
+        fields = [
+            'id',
+            'investment',
+            'investment_details',
+            'premium_amount',
+            'coverage_amount',
+            'status',
+            'created_at',
+            'expires_at',
+            'updated_at',
+            'is_eligible_for_claim',
+        ]
+        read_only_fields = [
+            'id',
+            'user',
+            'premium_amount',
+            'coverage_amount',
+            'status',
+            'created_at',
+            'expires_at',
+            'updated_at',
+        ]
+    
+    def get_investment_details(self, obj):
+        from investments.serializers import InvestmentSerializer
+        return InvestmentSerializer(obj.investment).data
+    
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['current_risk_factor'] = str(instance.calculate_risk_factor())
-        data['calculated_premium'] = str(instance.calculate_premium())
+        data['is_eligible_for_claim'] = instance.is_eligible_for_claim()
         return data
-
+    
     def create(self, validated_data):
-        # Get the user from the context
-        user = self.context['request'].user
-        validated_data['user'] = user
+        # Set user to the current user
+        validated_data['user'] = self.context['request'].user
         
-        # Calculate coverage amount based on investment amount
-        investment_amount = validated_data.get('initial_investment_amount')
-        validated_data['coverage_amount'] = self.calculate_coverage_amount(investment_amount)
-            
+        # Calculate premium amount (5% of investment amount)
+        investment = validated_data['investment']
+        investment_amount = investment.amount
+        premium_amount = investment_amount * Decimal('0.05')
+        validated_data['premium_amount'] = premium_amount
+        
+        # Calculate coverage amount (up to $5,000)
+        coverage_amount = min(investment_amount, Decimal('5000.00'))
+        validated_data['coverage_amount'] = coverage_amount
+        
+        # Set expiration date (1 year from now)
+        validated_data['expires_at'] = timezone.now() + timedelta(days=365)
+        
         # Create the policy
-        policy = super().create(validated_data)
+        return super().create(validated_data)
+
+
+class InsuranceClaimSerializer(serializers.ModelSerializer):
+    policy_details = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = InsuranceClaim
+        fields = [
+            'id',
+            'policy',
+            'policy_details',
+            'status',
+            'created_at',
+            'processed_at',
+            'amount_claimed',
+            'amount_paid',
+            'rejection_reason',
+        ]
+        read_only_fields = [
+            'id',
+            'status',
+            'created_at',
+            'processed_at',
+            'amount_paid',
+            'rejection_reason',
+        ]
+    
+    def get_policy_details(self, obj):
+        return InsurancePolicySerializer(obj.policy).data
+    
+    def create(self, validated_data):
+        # Set amount claimed to the policy's calculated payout amount
+        policy = validated_data['policy']
+        amount_claimed = policy.calculate_payout_amount()
+        validated_data['amount_claimed'] = amount_claimed
         
-        # Calculate and set initial risk factor
-        policy.risk_factor = policy.calculate_risk_factor()
-        policy.save(update_fields=['risk_factor'])
-        
-        return policy 
+        # Create the claim
+        return super().create(validated_data) 

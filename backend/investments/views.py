@@ -11,6 +11,7 @@ from .models import Investment, InvestmentPosition
 from accounts.models import Portfolio, PortfolioHistory
 from .serializers import InvestmentSerializer, InvestmentPositionSerializer
 from django.db.models import Sum
+from decimal import Decimal
 
 class InvestmentViewSet(viewsets.ModelViewSet):
     serializer_class = InvestmentSerializer
@@ -149,7 +150,7 @@ class InvestmentViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def active(self, request):
-        investments = self.get_queryset().filter(status='ACTIVE')
+        investments = self.get_queryset().filter(status__in=['ACTIVE', 'LOCKED', 'EXECUTED'])
         serializer = self.get_serializer(investments, many=True)
         return Response(serializer.data)
 
@@ -264,8 +265,6 @@ class InvestmentViewSet(viewsets.ModelViewSet):
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # 3. Create positions for each top voted company
-            from decimal import Decimal
-            
             # Calculate equal weight for each company
             company_count = len(top_companies)
             company_weight = Decimal('100.0') / Decimal(company_count)
@@ -318,3 +317,176 @@ class InvestmentViewSet(viewsets.ModelViewSet):
             return Response({
                 'error': f'Failed to generate positions: {str(e)}'
             }, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'])
+    def claim_insurance(self, request, pk=None):
+        """
+        Process an insurance claim for an investment that has lost significant value.
+        This will:
+        1. Check if the investment has lost more than 40% of its value
+        2. Check if insurance has not already been claimed
+        3. Add 30% of the original investment amount as credits to the user
+        4. Mark the investment as having claimed insurance
+        """
+        investment = self.get_object()
+        
+        # Check if investment is eligible for insurance
+        if investment.status not in ['ACTIVE', 'LOCKED', 'EXECUTED']:
+            return Response({
+                'error': f'Investment with status {investment.status} is not eligible for insurance claims'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Calculate loss percentage
+        if not investment.amount or not investment.current_value:
+            return Response({
+                'error': 'Invalid investment data for insurance claim'
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+        loss_percentage = ((investment.amount - investment.current_value) / investment.amount) * 100
+        
+        # Check eligibility
+        if loss_percentage < 40:
+            return Response({
+                'error': 'Investment must have lost at least 40% of its value to claim insurance',
+                'current_loss': f'{loss_percentage:.2f}%',
+                'current_value': float(investment.current_value),
+                'original_amount': float(investment.amount)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if insurance was already claimed
+        if hasattr(investment, 'insurance_claimed') and investment.insurance_claimed:
+            return Response({
+                'error': 'Insurance has already been claimed for this investment'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Calculate insurance payout (30% of original investment)
+        payout_amount = investment.amount * Decimal('0.3')
+        
+        with transaction.atomic():
+            try:
+                # Add credits to user account
+                investment.user.add_credits(payout_amount)
+                
+                # Mark insurance as claimed
+                investment.insurance_claimed = True
+                investment.save(update_fields=['insurance_claimed'])
+                
+                # Return success response
+                return Response({
+                    'status': 'success',
+                    'message': 'Insurance claim processed successfully',
+                    'amount': float(payout_amount),
+                    'investment_id': investment.id
+                })
+            except Exception as e:
+                return Response({
+                    'error': f'Failed to process insurance claim: {str(e)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['get'])
+    def executed(self, request):
+        """Get only investments with EXECUTED status"""
+        investments = self.get_queryset().filter(status='EXECUTED')
+        serializer = self.get_serializer(investments, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def emergency_withdraw(self, request, pk=None):
+        """
+        Emergency withdraw an investment that has lost significant value.
+        This will:
+        1. Check if the investment has lost more than 10% of its value
+        2. Add the current value of the investment as credits to the user
+        3. Mark the investment as WITHDRAWN
+        """
+        investment = self.get_object()
+        
+        # Check if investment is eligible for emergency withdrawal
+        if investment.status not in ['ACTIVE', 'LOCKED', 'EXECUTED']:
+            return Response({
+                'error': f'Investment with status {investment.status} is not eligible for emergency withdrawal'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Calculate loss percentage
+        if not investment.amount or not investment.current_value:
+            return Response({
+                'error': 'Invalid investment data for emergency withdrawal'
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+        loss_percentage = ((investment.amount - investment.current_value) / investment.amount) * 100
+        
+        # Check eligibility (loss should be more than 10%)
+        if loss_percentage < 10:
+            return Response({
+                'error': 'Investment must have lost at least 10% of its value to be eligible for emergency withdrawal',
+                'current_loss': f'{loss_percentage:.2f}%',
+                'current_value': float(investment.current_value),
+                'original_amount': float(investment.amount)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Process withdrawal
+        with transaction.atomic():
+            try:
+                # Add current value as credits to user account
+                investment.user.add_credits(investment.current_value)
+                
+                # Mark investment as withdrawn
+                investment.status = 'WITHDRAWN'
+                investment.save(update_fields=['status'])
+                
+                # Return success response
+                return Response({
+                    'status': 'success',
+                    'message': 'Emergency withdrawal processed successfully',
+                    'withdrawn_amount': float(investment.current_value),
+                    'investment_id': investment.id
+                })
+            except Exception as e:
+                return Response({
+                    'error': f'Failed to process emergency withdrawal: {str(e)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'])
+    def take_insurance(self, request, pk=None):
+        """
+        Take insurance for any investment, regardless of performance.
+        This will:
+        1. Add the original investment amount as credits to the user
+        2. Mark the investment as WITHDRAWN
+        """
+        investment = self.get_object()
+        
+        # Check if investment is eligible (must be in an active state)
+        if investment.status not in ['ACTIVE', 'LOCKED', 'EXECUTED']:
+            return Response({
+                'error': f'Investment with status {investment.status} is not eligible for insurance'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if insurance was already claimed
+        if hasattr(investment, 'insurance_claimed') and investment.insurance_claimed:
+            return Response({
+                'error': 'Insurance has already been claimed for this investment'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Process insurance
+        with transaction.atomic():
+            try:
+                # Add original investment amount as credits to user account
+                investment.user.add_credits(investment.amount)
+                
+                # Mark insurance as claimed and update status
+                investment.insurance_claimed = True
+                investment.status = 'WITHDRAWN'
+                investment.save(update_fields=['insurance_claimed', 'status'])
+                
+                # Return success response
+                return Response({
+                    'status': 'success',
+                    'message': 'Insurance taken successfully',
+                    'amount': float(investment.amount),
+                    'investment_id': investment.id
+                })
+            except Exception as e:
+                return Response({
+                    'error': f'Failed to process insurance: {str(e)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -16,20 +16,21 @@ export default function Dashboard() {
   });
 
   const statusColors = {
-    DRAFT: 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-100',
-    VOTING: 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100',
-    ACTIVE: 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100',
-    ARCHIVED: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100',
-    EXECUTED: 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
+    DRAFT: "bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-100",
+    VOTING: "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100",
+    ACTIVE: "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100",
+    ARCHIVED:
+      "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100",
+    EXECUTED: "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100",
   };
 
   const getStatusLabel = (status) => {
     const labels = {
-      DRAFT: 'Draft',
-      VOTING: 'Voting',
-      ACTIVE: 'Active',
-      EXECUTED: 'Executed',
-      ARCHIVED: 'Archived'
+      DRAFT: "Draft",
+      VOTING: "Voting",
+      ACTIVE: "Active",
+      EXECUTED: "Executed",
+      ARCHIVED: "Archived",
     };
     return labels[status] || status.charAt(0).toUpperCase() + status.slice(1);
   };
@@ -67,13 +68,19 @@ export default function Dashboard() {
         }));
 
         // Calculate average companies locally if needed
-        const totalCompanies = formattedIndexes.reduce((sum, index) => sum + index.companyCount, 0);
-        const avgCompanies = formattedIndexes.length > 0 ? totalCompanies / formattedIndexes.length : 0;
+        const totalCompanies = formattedIndexes.reduce(
+          (sum, index) => sum + index.companyCount,
+          0
+        );
+        const avgCompanies =
+          formattedIndexes.length > 0
+            ? totalCompanies / formattedIndexes.length
+            : 0;
 
         setIndexes(formattedIndexes);
         setStats({
           ...statsResponse,
-          average_companies_per_index: avgCompanies
+          average_companies_per_index: avgCompanies,
         });
       } catch (error) {
         console.error("Dashboard: Error fetching data:", error);
@@ -129,10 +136,10 @@ export default function Dashboard() {
             your vote.
           </p>
 
-          <div className="flex flex-wrap justify-center gap-2 mb-8">
+          <div className="flex flex-wrap justify-center gap-3 mb-12 px-4">
             <button
               onClick={() => setActiveFilter("all")}
-              className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg transition-colors whitespace-nowrap ${
+              className={`px-4 sm:px-5 py-2.5 text-sm sm:text-base rounded-lg transition-colors whitespace-nowrap ${
                 activeFilter === "all"
                   ? "bg-primary-600 text-white hover:bg-primary-700"
                   : "bg-white/90 dark:bg-gray-700/90 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -142,7 +149,7 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => setActiveFilter("active")}
-              className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg transition-colors whitespace-nowrap ${
+              className={`px-4 sm:px-5 py-2.5 text-sm sm:text-base rounded-lg transition-colors whitespace-nowrap ${
                 activeFilter === "active"
                   ? "bg-primary-600 text-white hover:bg-primary-700"
                   : "bg-white/90 dark:bg-gray-700/90 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -152,7 +159,7 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => setActiveFilter("voting")}
-              className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg transition-colors whitespace-nowrap ${
+              className={`px-4 sm:px-5 py-2.5 text-sm sm:text-base rounded-lg transition-colors whitespace-nowrap ${
                 activeFilter === "voting"
                   ? "bg-primary-600 text-white hover:bg-primary-700"
                   : "bg-white/90 dark:bg-gray-700/90 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -162,7 +169,7 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => setActiveFilter("draft")}
-              className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg transition-colors whitespace-nowrap ${
+              className={`px-4 sm:px-5 py-2.5 text-sm sm:text-base rounded-lg transition-colors whitespace-nowrap ${
                 activeFilter === "draft"
                   ? "bg-primary-600 text-white hover:bg-primary-700"
                   : "bg-white/90 dark:bg-gray-700/90 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -172,7 +179,7 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => setActiveFilter("archived")}
-              className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg transition-colors whitespace-nowrap ${
+              className={`px-4 sm:px-5 py-2.5 text-sm sm:text-base rounded-lg transition-colors whitespace-nowrap ${
                 activeFilter === "archived"
                   ? "bg-primary-600 text-white hover:bg-primary-700"
                   : "bg-white/90 dark:bg-gray-700/90 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -182,7 +189,7 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => setActiveFilter("executed")}
-              className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg transition-colors whitespace-nowrap ${
+              className={`px-4 sm:px-5 py-2.5 text-sm sm:text-base rounded-lg transition-colors whitespace-nowrap ${
                 activeFilter === "executed"
                   ? "bg-primary-600 text-white hover:bg-primary-700"
                   : "bg-white/90 dark:bg-gray-700/90 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -193,8 +200,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-10">
-          <div className="md:col-span-4 p-6 bg-white/90 dark:bg-gray-700/90 rounded-xl shadow-lg dark:bg-gray-800">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-8 mb-10">
+          <div className="p-6 bg-white/90 dark:bg-gray-700/90 rounded-xl shadow-lg dark:bg-gray-800">
             <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300">
               Total Groups
             </h3>
@@ -202,7 +209,7 @@ export default function Dashboard() {
               {stats.total_indexes}
             </p>
           </div>
-          <div className="md:col-span-4 p-6 bg-white/90 dark:bg-gray-700/90 rounded-xl shadow-lg dark:bg-gray-800">
+          <div className="p-6 bg-white/90 dark:bg-gray-700/90 rounded-xl shadow-lg dark:bg-gray-800">
             <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300">
               Active Groups
             </h3>
@@ -210,7 +217,7 @@ export default function Dashboard() {
               {stats.active_indexes}
             </p>
           </div>
-          <div className="md:col-span-4 p-6 bg-white/90 dark:bg-gray-700/90 rounded-xl shadow-lg dark:bg-gray-800">
+          <div className="p-6 bg-white/90 dark:bg-gray-700/90 rounded-xl shadow-lg dark:bg-gray-800">
             <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300">
               Avg. Companies
             </h3>
@@ -220,12 +227,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-8">
           {indexes.map((index) => (
             <Link
               key={index.id}
               href={index.path}
-              className="md:col-span-4 group relative p-6 bg-white/90 dark:bg-gray-700/90 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 dark:bg-gray-800 min-h-[200px] flex flex-col cursor-pointer hover:-translate-y-1"
+              className="group relative p-6 bg-white/90 dark:bg-gray-700/90 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 dark:bg-gray-800 min-h-[200px] flex flex-col cursor-pointer hover:-translate-y-1"
             >
               <div className="h-full flex flex-col justify-between">
                 <div>
@@ -260,7 +267,11 @@ export default function Dashboard() {
                   </h3>
                   {index.status && (
                     <div className="mt-2">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusColors[index.status]}`}>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                          statusColors[index.status]
+                        }`}
+                      >
                         {getStatusLabel(index.status)}
                       </span>
                     </div>

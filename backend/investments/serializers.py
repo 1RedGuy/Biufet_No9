@@ -75,7 +75,8 @@ class InvestmentSerializer(serializers.ModelSerializer):
             'withdrawal_eligible',
             'lock_period_end',
             'last_updated',
-            'positions'
+            'positions',
+            'insurance_claimed'
         ]
         read_only_fields = [
             'id',

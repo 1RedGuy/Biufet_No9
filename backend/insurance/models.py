@@ -1,140 +1,190 @@
 from django.db import models
-from django.conf import settings
+from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+from investments.models import Investment
+from accounts.models import CustomUser
 from decimal import Decimal
-from django.core.validators import MinValueValidator, MaxValueValidator
-from indexes.models import Index
-from .services import RiskCalculationService
-from django.core.exceptions import ValidationError
 
-# Create your models here.
 
 class InsurancePolicy(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='insurance_policies')
-    index = models.ForeignKey(Index, on_delete=models.CASCADE, related_name='insurance_policies')
-    initial_investment_amount = models.DecimalField(
-        max_digits=20, 
+    """
+    Insurance policy for an investment
+    Coverage up to $5,000 if investment drops below 60% of original value
+    """
+    STATUS_CHOICES = [
+        ('active', _('Active')),
+        ('expired', _('Expired')),
+        ('claimed', _('Claimed')),
+    ]
+    
+    investment = models.OneToOneField(
+        'investments.Investment',
+        on_delete=models.CASCADE,
+        related_name='insurance_policy'
+    )
+    user = models.ForeignKey(
+        'accounts.CustomUser',
+        on_delete=models.CASCADE,
+        related_name='insurance_policies'
+    )
+    premium_amount = models.DecimalField(
+        max_digits=12,
         decimal_places=2,
-        validators=[MinValueValidator(Decimal('5000.00'))]
+        help_text=_('Amount paid for the insurance premium')
     )
     coverage_amount = models.DecimalField(
-        max_digits=20, 
+        max_digits=12,
         decimal_places=2,
-        default=Decimal('5000.00'),
-        help_text="Maximum coverage amount is 5000 credits"
+        help_text=_('Maximum coverage amount (up to $5,000)')
     )
-    monthly_premium = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
-        default=Decimal('500.00')
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='active'
     )
-    risk_factor = models.DecimalField(
-        max_digits=5, 
-        decimal_places=2, 
-        default=Decimal('1.00'),
-        validators=[MinValueValidator(Decimal('0.1')), MaxValueValidator(Decimal('10.0'))],
-        help_text="Risk factor between 0.1 and 10.0, calculated based on various risk metrics"
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(
+        help_text=_('When the insurance policy expires')
     )
-    trigger_percentage = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=Decimal('50.00'),
-        help_text="Percentage of initial investment below which insurance pays out",
-        validators=[MinValueValidator(Decimal('1')), MaxValueValidator(Decimal('99'))]
-    )
-    start_date = models.DateTimeField(auto_now_add=True)
-    end_date = models.DateTimeField()
-    is_active = models.BooleanField(default=True)
-    has_claim = models.BooleanField(default=False)
-
-    class Meta:
-        verbose_name = "Insurance Policy"
-        verbose_name_plural = "Insurance Policies"
-
+    updated_at = models.DateTimeField(auto_now=True)
+    
     def __str__(self):
-        return f"Insurance Policy for {self.user.username} - Index: {self.index.name}"
-
-    def calculate_risk_factor(self):
-        """Calculate the risk factor for this policy"""
-        return RiskCalculationService.calculate_investment_risk_factor(
-            self.initial_investment_amount,
-            self.index,
-            self.user
-        )
-
-    def calculate_premium(self):
-        """Calculate monthly premium based on risk factor"""
-        base_premium = self.monthly_premium
-        current_risk = self.calculate_risk_factor()
-        
-        # Update stored risk factor if it has changed
-        if self.risk_factor != current_risk:
-            self.risk_factor = current_risk
-            self.save(update_fields=['risk_factor'])
-        
-        return base_premium * current_risk
-
-    def calculate_payout_amount(self, current_value):
+        return f"Insurance for {self.investment.id} - {self.get_status_display()}"
+    
+    def calculate_coverage_amount(self):
+        """Calculate the coverage amount (up to $5,000)"""
+        investment_amount = self.investment.amount
+        return min(investment_amount, Decimal('5000.00'))
+    
+    def is_eligible_for_claim(self):
         """
-        Calculate insurance payout based on current value and initial investment.
-        Returns the lesser of:
-        1. The maximum coverage amount (5000 credits)
-        2. The difference between trigger value and current value
+        Check if the policy is eligible for a claim
+        - Status must be active
+        - Policy must not be expired
+        - Investment must have lost more than 40% of its value
         """
-        trigger_value = self.initial_investment_amount * (self.trigger_percentage / Decimal('100'))
-        if current_value >= trigger_value:
-            return Decimal('0')
+        if self.status != 'active':
+            return False
+            
+        if timezone.now() > self.expires_at:
+            return False
+            
+        # Check if investment has lost more than 40% of its value
+        investment_amount = self.investment.amount
+        current_value = self.investment.current_value
         
-        loss_amount = trigger_value - current_value
+        if current_value <= (investment_amount * Decimal('0.6')):
+            return True
+            
+        return False
+    
+    def calculate_payout_amount(self):
+        """Calculate the payout amount for a claim"""
+        if not self.is_eligible_for_claim():
+            return Decimal('0.00')
+            
+        investment_amount = self.investment.amount
+        current_value = self.investment.current_value
+        loss_amount = investment_amount - current_value
+        
+        # Payout is the lesser of the loss amount or the coverage amount
         return min(loss_amount, self.coverage_amount)
 
-    def clean(self):
-        super().clean()
-        if self.coverage_amount > Decimal('5000.00'):
-            raise ValidationError("Maximum coverage amount is 5000 credits")
 
-    def save(self, *args, **kwargs):
-        if not self.pk:  # New policy
-            # Calculate initial risk factor
-            self.risk_factor = self.calculate_risk_factor()
-        super().save(*args, **kwargs)
-
-class CoveragePayment(models.Model):
-    policy = models.ForeignKey(InsurancePolicy, on_delete=models.CASCADE, related_name='payments')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_date = models.DateTimeField(auto_now_add=True)
-    payment_status = models.CharField(max_length=20, choices=[
-        ('pending', 'Pending'),
-        ('completed', 'Completed'),
-        ('failed', 'Failed')
-    ], default='pending')
-    transaction_id = models.CharField(max_length=100, blank=True, null=True)
-
-    class Meta:
-        ordering = ['-payment_date']
-
+class InsuranceClaim(models.Model):
+    """
+    Insurance claim for a policy
+    """
+    STATUS_CHOICES = [
+        ('pending', _('Pending')),
+        ('approved', _('Approved')),
+        ('rejected', _('Rejected')),
+        ('paid', _('Paid')),
+    ]
+    
+    policy = models.ForeignKey(
+        InsurancePolicy,
+        on_delete=models.CASCADE,
+        related_name='claims'
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    amount_claimed = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        help_text=_('Amount claimed')
+    )
+    amount_paid = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_('Amount actually paid')
+    )
+    rejection_reason = models.TextField(
+        null=True,
+        blank=True,
+        help_text=_('Reason for rejection if applicable')
+    )
+    
     def __str__(self):
-        return f"Payment for {self.policy} - {self.amount}"
-
-class Claim(models.Model):
-    policy = models.ForeignKey(InsurancePolicy, on_delete=models.CASCADE, related_name='claims')
-    current_investment_value = models.DecimalField(max_digits=20, decimal_places=2)
-    claim_amount = models.DecimalField(max_digits=20, decimal_places=2)
-    submission_date = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=[
-        ('pending', 'Pending'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
-        ('paid', 'Paid')
-    ], default='pending')
-    processed_date = models.DateTimeField(null=True, blank=True)
-    notes = models.TextField(blank=True)
-
-    class Meta:
-        ordering = ['-submission_date']
-
-    def __str__(self):
-        return f"Claim for {self.policy} - {self.claim_amount}"
-
-    def is_eligible(self):
-        trigger_value = self.policy.initial_investment_amount * (self.policy.trigger_percentage / Decimal('100'))
-        return self.current_investment_value < trigger_value
+        return f"Claim for {self.policy.investment.id} - {self.get_status_display()}"
+    
+    def process_claim(self):
+        """Process the claim and update status"""
+        if self.status != 'pending':
+            return False
+            
+        policy = self.policy
+        
+        # Check if policy is eligible for claim
+        if not policy.is_eligible_for_claim():
+            self.status = 'rejected'
+            self.rejection_reason = 'Policy is not eligible for claim'
+            self.processed_at = timezone.now()
+            self.save()
+            return False
+            
+        # Calculate payout amount
+        payout_amount = policy.calculate_payout_amount()
+        
+        if payout_amount <= 0:
+            self.status = 'rejected'
+            self.rejection_reason = 'No payout amount calculated'
+            self.processed_at = timezone.now()
+            self.save()
+            return False
+            
+        # Update claim
+        self.status = 'approved'
+        self.amount_paid = payout_amount
+        self.processed_at = timezone.now()
+        self.save()
+        
+        # Update policy
+        policy.status = 'claimed'
+        policy.save()
+        
+        return True
+    
+    def pay_claim(self):
+        """
+        Pay the approved claim to the user's account
+        """
+        if self.status != 'approved':
+            return False
+            
+        # Add credits to user's account
+        user = self.policy.user
+        user.add_credits(self.amount_paid)
+        
+        # Update claim status
+        self.status = 'paid'
+        self.save()
+        
+        return True 
