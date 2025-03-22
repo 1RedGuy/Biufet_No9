@@ -17,6 +17,7 @@ import {
 import { Line, Doughnut } from 'react-chartjs-2';
 import { fetchUserProfile } from '@/network/profile';
 import { getUserCredits } from '@/network/deposit-money';
+import { withdrawMoney } from '@/network/withdraw-money';
 
 ChartJS.register(
   CategoryScale,
@@ -35,6 +36,10 @@ export default function YourProfile() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [userCredits, setUserCredits] = useState(0);
+    const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+    const [withdrawAmount, setWithdrawAmount] = useState('');
+    const [withdrawError, setWithdrawError] = useState('');
+    const [isWithdrawing, setIsWithdrawing] = useState(false);
 
     const fetchData = async () => {
         try {
@@ -59,6 +64,52 @@ export default function YourProfile() {
             setIsLoading(false);
             console.error('Error loading profile:', err);
         }
+    };
+
+    const handleWithdrawSubmit = async (e) => {
+        e.preventDefault();
+        
+        if (!withdrawAmount || isNaN(parseFloat(withdrawAmount)) || parseFloat(withdrawAmount) <= 0) {
+            setWithdrawError('Please enter a valid amount greater than 0');
+            return;
+        }
+
+        if (parseFloat(withdrawAmount) > userCredits) {
+            setWithdrawError('Insufficient credits available');
+            return;
+        }
+
+        setIsWithdrawing(true);
+        setWithdrawError('');
+
+        try {
+            await withdrawMoney(parseFloat(withdrawAmount));
+            await fetchData(); // Refresh the data
+            setShowWithdrawModal(false);
+            setWithdrawAmount('');
+        } catch (err) {
+            console.error('Error withdrawing money:', err);
+            setWithdrawError(err.error || 'Failed to withdraw money. Please try again.');
+        } finally {
+            setIsWithdrawing(false);
+        }
+    };
+
+    const handleWithdrawAmountChange = (e) => {
+        // Remove any non-numeric characters except decimal point
+        let value = e.target.value.replace(/[^\d.]/g, '');
+        
+        const decimalCount = (value.match(/\./g) || []).length;
+        if (decimalCount > 1) {
+            value = value.substring(0, value.indexOf('.', value.indexOf('.') + 1));
+        }
+        
+        if (value.includes('.')) {
+            const parts = value.split('.');
+            value = parts[0] + '.' + (parts[1] || '').slice(0, 2);
+        }
+
+        setWithdrawAmount(value);
     };
 
   useEffect(() => {
@@ -234,6 +285,7 @@ export default function YourProfile() {
                                 <p className="text-xl font-bold text-primary-600 dark:text-primary-400">{formatCurrency(userCredits)}</p>
                             </div>
                             <button
+                                onClick={() => setShowWithdrawModal(true)}
                                 className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg shadow-sm transition-colors duration-200 font-medium text-sm sm:text-base relative group"
                             >
                                 <span>Withdraw</span>
@@ -411,6 +463,98 @@ export default function YourProfile() {
             </div>
           </Link>
         </div>
+
+        {/* Withdraw Modal */}
+        {showWithdrawModal && (
+            <div 
+                className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+                onClick={() => {
+                    setShowWithdrawModal(false);
+                    setWithdrawAmount('');
+                    setWithdrawError('');
+                }}
+            >
+                <div 
+                    className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-lg shadow-xl max-w-md w-full p-6 relative"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <button
+                        className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                        Withdraw from Your Account
+                    </h3>
+
+                    <p className="text-gray-600 dark:text-gray-300 mb-6">
+                        Please enter the amount you would like to withdraw from your account.
+                    </p>
+
+                    <form onSubmit={handleWithdrawSubmit}>
+                        {withdrawError && (
+                            <div className="mb-4 p-3 rounded bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm">
+                                {withdrawError}
+                            </div>
+                        )}
+
+                        <div className="mb-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <label htmlFor="withdrawAmount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Withdrawal Amount ($)
+                                </label>
+                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                    Available Credits: ${userCredits.toLocaleString()}
+                                </div>
+                            </div>
+                            <div className="relative rounded-md shadow-sm">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span className="text-gray-500 sm:text-sm">$</span>
+                                </div>
+                                <input
+                                    type="text"
+                                    id="withdrawAmount"
+                                    className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-8 pr-12 sm:text-sm border-gray-300 rounded-md py-2 dark:bg-gray-700/50 dark:border-gray-600 dark:text-white"
+                                    placeholder="0.00"
+                                    value={withdrawAmount}
+                                    onChange={handleWithdrawAmountChange}
+                                />
+                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <span className="text-gray-500 sm:text-sm">USD</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowWithdrawModal(false);
+                                    setWithdrawAmount('');
+                                    setWithdrawError('');
+                                }}
+                                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isWithdrawing || !withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > userCredits}
+                                className={`px-4 py-2 rounded-md shadow-sm text-sm font-medium text-white 
+                                    ${(isWithdrawing || !withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > userCredits)
+                                        ? 'bg-gray-400 cursor-not-allowed'
+                                        : 'bg-primary-600 hover:bg-primary-700'}`}
+                            >
+                                {isWithdrawing ? 'Processing...' : 'Withdraw Now'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        )}
       </div>
     </section>
   );

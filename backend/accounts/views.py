@@ -87,6 +87,36 @@ class UserViewSet(viewsets.ModelViewSet):
                 {'error': 'Invalid amount'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+    @action(detail=False, methods=['post'])
+    def remove_credits(self, request):
+        try:
+            amount = Decimal(str(request.data.get('amount', 0)))
+            if amount <= 0:
+                return Response(
+                    {'error': 'Amount must be greater than 0'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            user = request.user
+            if user.credits < amount:
+                return Response(
+                    {'error': 'Insufficient credits'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            user.credits -= amount
+            user.save()
+            
+            return Response({
+                'message': f'Successfully withdrawn {amount} credits',
+                'current_credits': user.credits
+            })
+        except (TypeError, ValueError):
+            return Response(
+                {'error': 'Invalid amount'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
     
     @action(detail=False, methods=['get'])
     def credits(self, request):
