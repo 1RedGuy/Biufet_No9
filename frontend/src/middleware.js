@@ -21,7 +21,8 @@ export function middleware(request) {
   );
 
   // Check for either access token or legacy token
-  const token = request.cookies.get("token")?.value || request.cookies.get("access")?.value;
+  const token =
+    request.cookies.get("token")?.value || request.cookies.get("access")?.value;
 
   // For fully protected paths, redirect to login if not authenticated
   if (isFullyProtectedPath && !token) {
@@ -30,9 +31,9 @@ export function middleware(request) {
     return NextResponse.redirect(url);
   }
 
-  // If the user is authenticated and trying to access login/register
-  if ((pathname === "/login" || pathname === "/register") && token) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  // If the user is trying to access login/register, always allow them
+  if (pathname === "/login" || pathname === "/register") {
+    return NextResponse.next();
   }
 
   return NextResponse.next();

@@ -144,13 +144,20 @@ class Investment(models.Model):
 
     def update_current_value(self):
         """Update current value based on index performance"""
+        positions = self.positions.all()
+        if not positions.exists():
+            return self.amount
+            
         total_value = sum(
             position.calculate_current_value() 
-            for position in self.positions.all()
+            for position in positions
         )
-        self.current_value = total_value
+        
+        # If total_value is 0, use the original amount
+        self.current_value = total_value if total_value > 0 else self.amount
         self.calculate_profit_loss()
         self.save()
+        return self.current_value
 
     def is_withdrawal_eligible(self):
         """Check if investment can be withdrawn"""
@@ -159,6 +166,50 @@ class Investment(models.Model):
             self.lock_period_end and
             timezone.now() >= self.lock_period_end
         )
+
+    def create_default_positions(self):
+        """Create default positions for the investment based on the index companies"""
+        if self.positions.exists():
+            return False  # Already has positions
+            
+        companies = self.index.companies.all()
+        if not companies:
+            return False  # No companies in index
+            
+        # Calculate equal weight for each company
+        weight = Decimal(100) / Decimal(companies.count())
+        weight = weight.quantize(Decimal('0.01'))
+        
+        # Adjust the last one to make sure we get exactly 100%
+        total_weight = weight * (companies.count() - 1)
+        last_weight = Decimal(100) - total_weight
+        
+        for i, company in enumerate(companies):
+            # For the last company, use adjusted weight
+            current_weight = last_weight if i == companies.count() - 1 else weight
+            
+            # Calculate amount allocated to this company
+            amount = (self.amount * current_weight) / Decimal(100)
+            
+            # Calculate quantity based on current price
+            quantity = Decimal(0)
+            if company.current_price and company.current_price > 0:
+                quantity = amount / company.current_price
+            
+            # Create the position
+            InvestmentPosition.objects.create(
+                investment=self,
+                company=company,
+                amount=amount,
+                quantity=quantity,
+                purchase_price=company.current_price or Decimal(0),
+                current_price=company.current_price or Decimal(0),
+                weight=current_weight
+            )
+        
+        # Update investment values
+        self.update_current_value()
+        return True
 
 class InvestmentPosition(models.Model):
     investment = models.ForeignKey(

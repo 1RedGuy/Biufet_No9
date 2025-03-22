@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
 from rest_framework import status
-from .tasks import update_stock_prices, run_test_update
+from .tasks import update_stock_prices
 from .models import UpdateLog
 from django.utils import timezone
 import threading

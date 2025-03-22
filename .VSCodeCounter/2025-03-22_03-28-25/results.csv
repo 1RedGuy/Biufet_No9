@@ -1,0 +1,130 @@
+"filename", "language", "Markdown", "Python", "JSON", "pip requirements", "Shell Script", "JavaScript", "JSON with Comments", "XML", "JavaScript JSX", "CSS", "comment", "blank", "total"
+"/Users/vdemirev/Desktop/Biufet_No9/README.md", "Markdown", 46, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 65
+"/Users/vdemirev/Desktop/Biufet_No9/backend/accounts/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/accounts/admin.py", "Python", 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 4
+"/Users/vdemirev/Desktop/Biufet_No9/backend/accounts/apps.py", "Python", 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 7
+"/Users/vdemirev/Desktop/Biufet_No9/backend/accounts/management/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/accounts/management/commands/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/accounts/migrations/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/accounts/models.py", "Python", 0, 80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 99
+"/Users/vdemirev/Desktop/Biufet_No9/backend/accounts/serializer.py", "Python", 0, 110, 0, 0, 0, 0, 0, 0, 0, 0, 1, 17, 128
+"/Users/vdemirev/Desktop/Biufet_No9/backend/accounts/tests.py", "Python", 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 4
+"/Users/vdemirev/Desktop/Biufet_No9/backend/accounts/urls.py", "Python", 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 24
+"/Users/vdemirev/Desktop/Biufet_No9/backend/accounts/views.py", "Python", 0, 218, 0, 0, 0, 0, 0, 0, 0, 0, 13, 41, 272
+"/Users/vdemirev/Desktop/Biufet_No9/backend/add_foreign_key.py", "Python", 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 16
+"/Users/vdemirev/Desktop/Biufet_No9/backend/backend/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/backend/asgi.py", "Python", 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 17
+"/Users/vdemirev/Desktop/Biufet_No9/backend/backend/settings.py", "Python", 0, 179, 0, 0, 0, 0, 0, 0, 0, 0, 16, 38, 233
+"/Users/vdemirev/Desktop/Biufet_No9/backend/backend/urls.py", "Python", 0, 27, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 30
+"/Users/vdemirev/Desktop/Biufet_No9/backend/backend/wsgi.py", "Python", 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 17
+"/Users/vdemirev/Desktop/Biufet_No9/backend/check_schema.py", "Python", 0, 48, 0, 0, 0, 0, 0, 0, 0, 0, 4, 8, 60
+"/Users/vdemirev/Desktop/Biufet_No9/backend/companies/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/companies/admin.py", "Python", 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 10
+"/Users/vdemirev/Desktop/Biufet_No9/backend/companies/apps.py", "Python", 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 7
+"/Users/vdemirev/Desktop/Biufet_No9/backend/companies/management/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/companies/management/commands/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/companies/management/commands/cleanup_companies.py", "Python", 0, 42, 0, 0, 0, 0, 0, 0, 0, 0, 6, 11, 59
+"/Users/vdemirev/Desktop/Biufet_No9/backend/companies/management/commands/create_active_index.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2
+"/Users/vdemirev/Desktop/Biufet_No9/backend/companies/management/commands/import_companies.py", "Python", 0, 41, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 49
+"/Users/vdemirev/Desktop/Biufet_No9/backend/companies/management/commands/show_sample_data.py", "Python", 0, 25, 0, 0, 0, 0, 0, 0, 0, 0, 2, 6, 33
+"/Users/vdemirev/Desktop/Biufet_No9/backend/companies/management/commands/update_stock_data.py", "Python", 0, 78, 0, 0, 0, 0, 0, 0, 0, 0, 11, 17, 106
+"/Users/vdemirev/Desktop/Biufet_No9/backend/companies/migrations/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/companies/models.py", "Python", 0, 46, 0, 0, 0, 0, 0, 0, 0, 0, 2, 8, 56
+"/Users/vdemirev/Desktop/Biufet_No9/backend/companies/serializers.py", "Python", 0, 26, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 31
+"/Users/vdemirev/Desktop/Biufet_No9/backend/companies/urls.py", "Python", 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 10
+"/Users/vdemirev/Desktop/Biufet_No9/backend/companies/views.py", "Python", 0, 79, 0, 0, 0, 0, 0, 0, 0, 0, 3, 17, 99
+"/Users/vdemirev/Desktop/Biufet_No9/backend/indexes/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/indexes/admin.py", "Python", 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 23
+"/Users/vdemirev/Desktop/Biufet_No9/backend/indexes/apps.py", "Python", 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 7
+"/Users/vdemirev/Desktop/Biufet_No9/backend/indexes/migrations/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/indexes/models.py", "Python", 0, 86, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 94
+"/Users/vdemirev/Desktop/Biufet_No9/backend/indexes/serializers.py", "Python", 0, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 54
+"/Users/vdemirev/Desktop/Biufet_No9/backend/indexes/tests.py", "Python", 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 4
+"/Users/vdemirev/Desktop/Biufet_No9/backend/indexes/urls.py", "Python", 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 10
+"/Users/vdemirev/Desktop/Biufet_No9/backend/indexes/views.py", "Python", 0, 175, 0, 0, 0, 0, 0, 0, 0, 0, 12, 35, 222
+"/Users/vdemirev/Desktop/Biufet_No9/backend/insurance/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/insurance/admin.py", "Python", 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 26
+"/Users/vdemirev/Desktop/Biufet_No9/backend/insurance/apps.py", "Python", 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 7
+"/Users/vdemirev/Desktop/Biufet_No9/backend/insurance/migrations/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/insurance/models.py", "Python", 0, 118, 0, 0, 0, 0, 0, 0, 0, 0, 3, 20, 141
+"/Users/vdemirev/Desktop/Biufet_No9/backend/insurance/serializers.py", "Python", 0, 74, 0, 0, 0, 0, 0, 0, 0, 0, 8, 18, 100
+"/Users/vdemirev/Desktop/Biufet_No9/backend/insurance/services.py", "Python", 0, 81, 0, 0, 0, 0, 0, 0, 0, 0, 6, 16, 103
+"/Users/vdemirev/Desktop/Biufet_No9/backend/insurance/tests.py", "Python", 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 4
+"/Users/vdemirev/Desktop/Biufet_No9/backend/insurance/urls.py", "Python", 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 12
+"/Users/vdemirev/Desktop/Biufet_No9/backend/insurance/views.py", "Python", 0, 108, 0, 0, 0, 0, 0, 0, 0, 0, 6, 29, 143
+"/Users/vdemirev/Desktop/Biufet_No9/backend/investments/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/investments/admin.py", "Python", 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 4
+"/Users/vdemirev/Desktop/Biufet_No9/backend/investments/apps.py", "Python", 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 7
+"/Users/vdemirev/Desktop/Biufet_No9/backend/investments/management/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/investments/management/commands/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/investments/management/commands/create_positions.py", "Python", 0, 26, 0, 0, 0, 0, 0, 0, 0, 0, 2, 7, 35
+"/Users/vdemirev/Desktop/Biufet_No9/backend/investments/migrations/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/investments/models.py", "Python", 0, 253, 0, 0, 0, 0, 0, 0, 0, 0, 8, 28, 289
+"/Users/vdemirev/Desktop/Biufet_No9/backend/investments/serializers.py", "Python", 0, 113, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 122
+"/Users/vdemirev/Desktop/Biufet_No9/backend/investments/tests.py", "Python", 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 4
+"/Users/vdemirev/Desktop/Biufet_No9/backend/investments/urls.py", "Python", 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 10
+"/Users/vdemirev/Desktop/Biufet_No9/backend/investments/views.py", "Python", 0, 182, 0, 0, 0, 0, 0, 0, 0, 0, 18, 44, 244
+"/Users/vdemirev/Desktop/Biufet_No9/backend/manage.py", "Python", 0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 23
+"/Users/vdemirev/Desktop/Biufet_No9/backend/requirements.txt", "pip requirements", 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 11
+"/Users/vdemirev/Desktop/Biufet_No9/backend/test_api.sh", "Shell Script", 0, 0, 0, 0, 268, 0, 0, 0, 0, 0, 45, 46, 359
+"/Users/vdemirev/Desktop/Biufet_No9/backend/updates/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/updates/apps.py", "Python", 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 3, 4, 23
+"/Users/vdemirev/Desktop/Biufet_No9/backend/updates/migrations/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/updates/models.py", "Python", 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 11
+"/Users/vdemirev/Desktop/Biufet_No9/backend/updates/tasks.py", "Python", 0, 105, 0, 0, 0, 0, 0, 0, 0, 0, 17, 24, 146
+"/Users/vdemirev/Desktop/Biufet_No9/backend/updates/urls.py", "Python", 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7
+"/Users/vdemirev/Desktop/Biufet_No9/backend/updates/views.py", "Python", 0, 48, 0, 0, 0, 0, 0, 0, 0, 0, 3, 8, 59
+"/Users/vdemirev/Desktop/Biufet_No9/backend/voting/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/voting/admin.py", "Python", 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 16
+"/Users/vdemirev/Desktop/Biufet_No9/backend/voting/apps.py", "Python", 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 6
+"/Users/vdemirev/Desktop/Biufet_No9/backend/voting/migrations/__init__.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/backend/voting/models.py", "Python", 0, 112, 0, 0, 0, 0, 0, 0, 0, 0, 4, 13, 129
+"/Users/vdemirev/Desktop/Biufet_No9/backend/voting/serializers.py", "Python", 0, 94, 0, 0, 0, 0, 0, 0, 0, 0, 16, 25, 135
+"/Users/vdemirev/Desktop/Biufet_No9/backend/voting/urls.py", "Python", 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 12
+"/Users/vdemirev/Desktop/Biufet_No9/backend/voting/views.py", "Python", 0, 91, 0, 0, 0, 0, 0, 0, 0, 0, 3, 21, 115
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/eslint.config.mjs", "JavaScript", 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 5, 15
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/jsconfig.json", "JSON with Comments", 0, 0, 0, 0, 0, 0, 23, 0, 0, 0, 0, 1, 24
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/next.config.mjs", "JavaScript", 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1, 2, 5
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/package-lock.json", "JSON", 0, 0, 5579, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5580
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/package.json", "JSON", 0, 0, 30, 0, 0, 0, 0, 0, 0, 0, 0, 1, 31
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/postcss.config.mjs", "JavaScript", 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 1, 6
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/public/favicon.svg", "XML", 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 5
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/public/file.svg", "XML", 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/public/globe.svg", "XML", 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/public/hero.svg", "XML", 0, 0, 0, 0, 0, 0, 0, 132, 0, 0, 0, 0, 132
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/public/next.svg", "XML", 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/public/vercel.svg", "XML", 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/public/window.svg", "XML", 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/app/(auth)/forgot-password/page.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 61, 0, 0, 2, 63
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/app/(auth)/login/page.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 147, 0, 0, 8, 155
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/app/(auth)/register/page.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 179, 0, 0, 7, 186
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/app/contact/page.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 184, 0, 0, 21, 205
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/app/dashboard/[groupId]/page.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 905, 0, 33, 70, 1008
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/app/dashboard/page.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 264, 0, 1, 20, 285
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/app/deposit-money/page.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 131, 0, 1, 17, 149
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/app/error.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 33, 0, 1, 3, 37
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/app/globals.css", "CSS", 0, 0, 0, 0, 0, 0, 0, 0, 0, 27, 0, 6, 33
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/app/layout.js", "JavaScript", 0, 0, 0, 0, 0, 28, 0, 0, 0, 0, 0, 4, 32
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/app/learn-more/page.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 272, 0, 6, 24, 302
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/app/loading.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 2, 11
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/app/manage-index/page.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 147, 0, 3, 18, 168
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/app/not-found.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 2, 23
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/app/page.js", "JavaScript", 0, 0, 0, 0, 0, 76, 0, 0, 0, 0, 0, 5, 81
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/app/profile/page.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 564, 0, 3, 39, 606
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/app/terms/page.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 96, 0, 0, 13, 109
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/components/ErrorMessage.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 0, 25
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/components/LoadingSpinner.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 22, 0, 0, 1, 23
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/components/navbar.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 170, 0, 6, 13, 189
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/middleware.js", "JavaScript", 0, 0, 0, 0, 0, 29, 0, 0, 0, 0, 8, 11, 48
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/network/auth.js", "JavaScript", 0, 0, 0, 0, 0, 196, 0, 0, 0, 0, 23, 40, 259
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/network/axios.js", "JavaScript", 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, 0, 5, 37
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/network/contact.js", "JavaScript", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/network/dashboard.js", "JavaScript", 0, 0, 0, 0, 0, 39, 0, 0, 0, 0, 4, 5, 48
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/network/deposit-money.js", "JavaScript", 0, 0, 0, 0, 0, 45, 0, 0, 0, 0, 0, 10, 55
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/network/indexes.js", "JavaScript", 0, 0, 0, 0, 0, 215, 0, 0, 0, 0, 11, 27, 253
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/network/investments.js", "JavaScript", 0, 0, 0, 0, 0, 133, 0, 0, 0, 0, 9, 22, 164
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/network/profile.js", "JavaScript", 0, 0, 0, 0, 0, 37, 0, 0, 0, 0, 1, 6, 44
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/network/voting.js", "JavaScript", 0, 0, 0, 0, 0, 129, 0, 0, 0, 0, 7, 21, 157
+"/Users/vdemirev/Desktop/Biufet_No9/frontend/src/network/withdraw-money.js", "JavaScript", 0, 0, 0, 0, 0, 25, 0, 0, 0, 0, 0, 5, 30
+"/Users/vdemirev/Desktop/Biufet_No9/package-lock.json", "JSON", 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7
+"Total", "-", 46, 2958, 5615, 11, 268, 1001, 23, 142, 3230, 27, 339, 1112, 14772

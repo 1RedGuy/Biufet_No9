@@ -123,7 +123,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response({
             'credits': request.user.credits
         })
-
+    
 class PortfolioViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PortfolioSerializer
     permission_classes = [IsAuthenticated]
@@ -190,6 +190,9 @@ class UserProfileView(APIView):
         for position in positions:
             sector_code = position.company.sector
             sector_name = dict(Company.SECTOR_CHOICES).get(sector_code, 'Other')
+            # Convert gettext_lazy proxy object to string
+            if hasattr(sector_name, '_proxy____cast'):
+                sector_name = str(sector_name)
             current_value = position.quantity * position.current_price
             sector_totals[sector_name] = sector_totals.get(sector_name, Decimal('0.00')) + current_value
 

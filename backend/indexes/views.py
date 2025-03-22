@@ -112,9 +112,13 @@ class IndexViewSet(viewsets.ModelViewSet):
         index = self.get_object()
         companies = index.companies.all()
         
+        # Calculate averages
+        avg_price = companies.aggregate(Avg('current_price'))['current_price__avg'] or 0
+        
         stats = {
             'total_companies': companies.count(),
-            'total_market_cap': companies.aggregate(Sum('market_cap'))['market_cap__sum'],
+            'total_market_cap': companies.aggregate(Sum('market_cap'))['market_cap__sum'] or 0,
+            'average_price': avg_price,
             'highest_price': companies.order_by('-current_price').first(),
             'lowest_price': companies.order_by('current_price').first(),
         }
@@ -122,7 +126,8 @@ class IndexViewSet(viewsets.ModelViewSet):
         # Format the response
         response_data = {
             'total_companies': stats['total_companies'],
-            'total_market_cap': stats['total_market_cap'],
+            'total_market_cap': stats['total_market_cap'] or 0,
+            'average_price': stats['average_price'],
         }
         
         if stats['highest_price']:

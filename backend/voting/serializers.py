@@ -129,6 +129,7 @@ class CreateVoteSerializer(serializers.Serializer):
         # Mark investment as voted using the new has_voted flag
         # Keep status as ACTIVE so it still counts in portfolio calculations
         investment.has_voted = True
+        investment.status = 'VOTED'    
         investment.save()
         
         return created_votes 

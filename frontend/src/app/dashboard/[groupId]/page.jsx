@@ -526,7 +526,10 @@ export default function GroupPage() {
                 Avg. Price
               </h3>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                ${companyStats.average_price?.toFixed(2) || "0.00"}
+                $
+                {typeof companyStats.average_price === "number"
+                  ? companyStats.average_price.toFixed(2)
+                  : parseFloat(companyStats.average_price || 0).toFixed(2)}
               </p>
             </div>
           </div>
@@ -667,7 +670,10 @@ export default function GroupPage() {
                 <div className="mt-auto flex justify-between items-end">
                   <div className="space-y-1">
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Price: ${company.price?.toFixed(2) || "0.00"}
+                      Price: ${" "}
+                      {typeof company.price === "number"
+                        ? company.price.toFixed(2)
+                        : parseFloat(company.price || 0).toFixed(2)}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       Market Cap: ${(company.market_cap / 1000000).toFixed(1)}M

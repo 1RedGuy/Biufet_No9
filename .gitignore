@@ -6,6 +6,10 @@ __pycache__
 db.sqlite3
 media
 
+# Django Migrations #
+**/migrations/*.py
+!**/migrations/__init__.py
+
 # Backup files # 
 *.bak 
 
@@ -278,3 +282,5 @@ dist
 
 .DS_Store
 companies.json
+/backend/voting/migrations
+backend/voting/migrations/0003_alter_session_id_nullable.py
