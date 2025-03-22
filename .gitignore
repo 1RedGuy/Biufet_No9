@@ -4,6 +4,7 @@
 *.pyc
 __pycache__
 db.sqlite3
+db.sqlite3-journal
 media
 
 # Django Migrations #
@@ -141,8 +142,6 @@ GitHub.sublime-settings
 !.vscode/extensions.json 
 .history
 
-
-
 # Logs
 logs
 *.log
@@ -222,7 +221,6 @@ web_modules/
 .env.development.local
 .env.test.local
 .env.production.local
-.env.local
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -284,3 +282,27 @@ dist
 companies.json
 /backend/voting/migrations
 backend/voting/migrations/0003_alter_session_id_nullable.py
+
+# JavaScript/Next.js
+node_modules/
+.next/
+out/
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS specific
+.DS_Store
+Thumbs.db
